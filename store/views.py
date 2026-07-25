@@ -72,7 +72,7 @@ def register(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Registration successful!')
-            return redirect('home')
+            return redirect('/home')
     else:
         form = UserRegistrationForm()
     return render(request, 'store/register.html', {'form': form})

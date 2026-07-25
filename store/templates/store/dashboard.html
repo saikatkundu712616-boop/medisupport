@@ -1,6 +1,6 @@
 {% extends 'store/base.html' %}
 {% load static %}
-
+ {% block extra_css %}<link rel="stylesheet" href="{% static 'css/base.css' %}">{% endblock %}
 {% block content %}
 <div class="container-fluid">
     <h4 class="mb-4">Dashboard Overview</h4>
@@ -73,6 +73,7 @@
                         <a href="{% url 'store:admin_order_management' %}" class="btn btn-warning text-white">
                             <i class="bi bi-file-earmark-text"></i> View Orders Report
                         </a>
+                         
                     </div>
                 </div>
             </div>
@@ -161,42 +162,15 @@
         </div>
     </div>
 </div>
+<div style="height:400px;">
+    <canvas id="salesChart"></canvas>
+</div>
+
+{{ sales_data|json_script:"sales-data" }}
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Sales Chart
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    const salesData = {{ sales_data|safe }};
-    
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: salesData.map(item => item.date),
-            datasets: [{
-                label: 'Daily Sales ($)',
-                data: salesData.map(item => item.total),
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-</script>
+<script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %}
