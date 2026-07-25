@@ -1,0 +1,167 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h4 class="mb-4">New Purchase Order</h4>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Purchase Details</h5>
+                </div>
+                <div class="card-body">
+                    <form id="purchaseForm" method="post">
+                        {% csrf_token %}
+                        {{ purchase_form.as_p }}
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Add Items</h5>
+                    <button class="btn btn-sm btn-primary" onclick="addItemRow()">
+                        <i class="bi bi-plus-circle"></i> Add Item
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="itemsTable">
+                            <thead>
+                                <tr>
+                                    <th>Medicine</th>
+                                    <th>Qty</th>
+                                    <th>Purchase Price</th>
+                                    <th>Sell Price</th>
+                                    <th>Total</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsBody">
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Total Amount:</strong></td>
+                                    <td><strong id="grandTotal">0.00</strong></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-success" onclick="submitPurchase()">
+                            <i class="bi bi-check-circle"></i> Complete Purchase
+                        </button>
+                        <a href="{% url 'store:purchase_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden input to store items data -->
+<input type="hidden" id="itemsData" name="items_data" form="purchaseForm">
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let items = [];
+    const medicines = {{ medicines_json|default:'[]'|safe }};
+
+    function addItemRow() {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <select class="form-select form-select-sm medicine-select" onchange="updateItemDetails(this)">
+                    <option value="">Select Medicine</option>
+                    ${medicines.map(m => `<option value="${m.id}" data-price="${m.purchase_price}" data-sell="${m.selling_price}">${m.name}</option>`).join('')}
+                </select>
+            </td>
+            <td><input type="number" class="form-control form-control-sm quantity" value="1" min="1" onchange="updateRowTotal(this)"></td>
+            <td><input type="number" class="form-control form-control-sm purchase-price" step="0.01" onchange="updateRowTotal(this)"></td>
+            <td><input type="number" class="form-control form-control-sm sell-price" step="0.01"></td>
+            <td class="row-total">0.00</td>
+            <td><button class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="bi bi-trash"></i></button></td>
+        `;
+        document.getElementById('itemsBody').appendChild(row);
+    }
+
+    function updateItemDetails(select) {
+        const row = select.closest('tr');
+        const selected = medicines.find(m => m.id == select.value);
+        if (selected) {
+            row.querySelector('.purchase-price').value = selected.purchase_price;
+            row.querySelector('.sell-price').value = selected.selling_price;
+            updateRowTotal(row.querySelector('.quantity'));
+        }
+    }
+
+    function updateRowTotal(input) {
+        const row = input.closest('tr');
+        const qty = parseFloat(row.querySelector('.quantity').value) || 0;
+        const price = parseFloat(row.querySelector('.purchase-price').value) || 0;
+        const total = qty * price;
+        row.querySelector('.row-total').textContent = total.toFixed(2);
+        calculateGrandTotal();
+    }
+
+    function calculateGrandTotal() {
+        let total = 0;
+        document.querySelectorAll('.row-total').forEach(el => {
+            total += parseFloat(el.textContent) || 0;
+        });
+        document.getElementById('grandTotal').textContent = total.toFixed(2);
+    }
+
+    function removeRow(btn) {
+        btn.closest('tr').remove();
+        calculateGrandTotal();
+    }
+
+    function submitPurchase() {
+        const rows = document.querySelectorAll('#itemsBody tr');
+        items = [];
+        let valid = true;
+        
+        rows.forEach(row => {
+            const medicineId = row.querySelector('.medicine-select').value;
+            const quantity = parseInt(row.querySelector('.quantity').value);
+            const purchasePrice = parseFloat(row.querySelector('.purchase-price').value);
+            const sellingPrice = parseFloat(row.querySelector('.sell-price').value);
+            
+            if (!medicineId || !quantity || !purchasePrice || !sellingPrice) {
+                valid = false;
+                row.style.backgroundColor = '#ffcccc';
+            } else {
+                row.style.backgroundColor = '';
+                items.push({
+                    medicine: parseInt(medicineId),
+                    quantity: quantity,
+                    purchase_price: purchasePrice,
+                    selling_price: sellingPrice
+                });
+            }
+        });
+        
+        if (!valid) {
+            alert('Please fill all fields correctly');
+            return;
+        }
+        
+        if (items.length === 0) {
+            alert('Please add at least one item');
+            return;
+        }
+        
+        document.getElementById('itemsData').value = JSON.stringify(items);
+        document.getElementById('purchaseForm').submit();
+    }
+</script>
+{% endblock %}

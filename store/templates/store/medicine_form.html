@@ -1,0 +1,424 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        padding: 10px 12px;
+        transition: all 0.3s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .form-control.is-invalid {
+        border-color: #dc3545;
+    }
+    .invalid-feedback {
+        display: block;
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 5px;
+    }
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 10px;
+        margin-top: 10px;
+        border: 2px solid #eee;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-{% if form.instance.pk %}pencil-square{% else %}plus-circle{% endif %}"></i> {{ title }}</h5>
+                    <span class="badge bg-light text-dark">
+                        {% if form.instance.pk %}
+                            ID: #{{ form.instance.id }}
+                        {% else %}
+                            New Medicine
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="medicineForm">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-primary">
+                                    <i class="bi bi-info-circle"></i> Basic Information
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label required-field">
+                                    Medicine Name
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="invalid-feedback">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label required-field">
+                                    Category
+                                </label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="invalid-feedback">{{ form.category.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.supplier.id_for_label }}" class="form-label required-field">
+                                    Supplier
+                                </label>
+                                {{ form.supplier }}
+                                {% if form.supplier.errors %}
+                                    <div class="invalid-feedback">{{ form.supplier.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.medicine_type.id_for_label }}" class="form-label required-field">
+                                    Medicine Type
+                                </label>
+                                {{ form.medicine_type }}
+                                {% if form.medicine_type.errors %}
+                                    <div class="invalid-feedback">{{ form.medicine_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.generic_name.id_for_label }}" class="form-label">
+                                    Generic Name
+                                </label>
+                                {{ form.generic_name }}
+                                {% if form.generic_name.errors %}
+                                    <div class="invalid-feedback">{{ form.generic_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.manufacturer.id_for_label }}" class="form-label required-field">
+                                    Manufacturer
+                                </label>
+                                {{ form.manufacturer }}
+                                {% if form.manufacturer.errors %}
+                                    <div class="invalid-feedback">{{ form.manufacturer.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Pricing Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-success">
+                                    <i class="bi bi-currency-dollar"></i> Pricing Information
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.purchase_price.id_for_label }}" class="form-label required-field">
+                                    Purchase Price
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.purchase_price }}
+                                </div>
+                                {% if form.purchase_price.errors %}
+                                    <div class="invalid-feedback">{{ form.purchase_price.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.selling_price.id_for_label }}" class="form-label required-field">
+                                    Selling Price
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.selling_price }}
+                                </div>
+                                {% if form.selling_price.errors %}
+                                    <div class="invalid-feedback">{{ form.selling_price.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.mrp.id_for_label }}" class="form-label required-field">
+                                    MRP
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.mrp }}
+                                </div>
+                                {% if form.mrp.errors %}
+                                    <div class="invalid-feedback">{{ form.mrp.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.discount_percentage.id_for_label }}" class="form-label">
+                                    Discount (%)
+                                </label>
+                                {{ form.discount_percentage }}
+                                {% if form.discount_percentage.errors %}
+                                    <div class="invalid-feedback">{{ form.discount_percentage.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Stock Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-warning">
+                                    <i class="bi bi-box-seam"></i> Stock Information
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label required-field">
+                                    Quantity
+                                </label>
+                                {{ form.quantity }}
+                                {% if form.quantity.errors %}
+                                    <div class="invalid-feedback">{{ form.quantity.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.reorder_level.id_for_label }}" class="form-label required-field">
+                                    Reorder Level
+                                </label>
+                                {{ form.reorder_level }}
+                                {% if form.reorder_level.errors %}
+                                    <div class="invalid-feedback">{{ form.reorder_level.errors }}</div>
+                                {% endif %}
+                                <div class="help-text">Minimum stock level before reordering</div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.batch_number.id_for_label }}" class="form-label required-field">
+                                    Batch Number
+                                </label>
+                                {{ form.batch_number }}
+                                {% if form.batch_number.errors %}
+                                    <div class="invalid-feedback">{{ form.batch_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.expiry_date.id_for_label }}" class="form-label required-field">
+                                    Expiry Date
+                                </label>
+                                {{ form.expiry_date }}
+                                {% if form.expiry_date.errors %}
+                                    <div class="invalid-feedback">{{ form.expiry_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="border-bottom pb-2 text-info">
+                                    <i class="bi bi-file-text"></i> Additional Information
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.composition.id_for_label }}" class="form-label">
+                                    Composition
+                                </label>
+                                {{ form.composition }}
+                                {% if form.composition.errors %}
+                                    <div class="invalid-feedback">{{ form.composition.errors }}</div>
+                                {% endif %}
+                                <div class="help-text">Active ingredients and composition details</div>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    Description
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.image.id_for_label }}" class="form-label">
+                                    Medicine Image
+                                </label>
+                                {{ form.image }}
+                                {% if form.image.errors %}
+                                    <div class="invalid-feedback">{{ form.image.errors }}</div>
+                                {% endif %}
+                                {% if form.instance.image %}
+                                    <div class="mt-2">
+                                        <img src="{{ form.instance.image.url }}" alt="Medicine Image" class="image-preview">
+                                        <br>
+                                        <small class="text-muted">Current image</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="mt-4">
+                                    <div class="form-check mb-2">
+                                        {{ form.prescription_required }}
+                                        <label class="form-check-label" for="{{ form.prescription_required.id_for_label }}">
+                                            <i class="bi bi-prescription"></i> Prescription Required
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        {{ form.is_active }}
+                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                            <i class="bi bi-check-circle"></i> Active
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle"></i> 
+                                        {% if form.instance.pk %}Update{% else %}Save{% endif %} Medicine
+                                    </button>
+                                    <a href="{% url 'store:medicine_list' %}" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left"></i> Cancel
+                                    </a>
+                                    {% if form.instance.pk %}
+                                        <a href="{% url 'store:medicine_detail' form.instance.id %}" class="btn btn-info text-white">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-calculate discount
+    document.addEventListener('DOMContentLoaded', function() {
+        const mrpInput = document.getElementById('{{ form.mrp.id_for_label }}');
+        const sellingPriceInput = document.getElementById('{{ form.selling_price.id_for_label }}');
+        const discountInput = document.getElementById('{{ form.discount_percentage.id_for_label }}');
+        
+        function calculateDiscount() {
+            const mrp = parseFloat(mrpInput.value) || 0;
+            const sellingPrice = parseFloat(sellingPriceInput.value) || 0;
+            
+            if (mrp > 0 && sellingPrice > 0) {
+                const discount = ((mrp - sellingPrice) / mrp) * 100;
+                discountInput.value = discount.toFixed(2);
+            }
+        }
+        
+        if (mrpInput && sellingPriceInput) {
+            mrpInput.addEventListener('change', calculateDiscount);
+            sellingPriceInput.addEventListener('change', calculateDiscount);
+        }
+    });
+    
+    // Image preview
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+        if (imageInput) {
+            imageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.querySelector('.image-preview');
+                        if (preview) {
+                            preview.src = e.target.result;
+                        } else {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'image-preview';
+                            img.alt = 'Preview';
+                            imageInput.parentNode.appendChild(img);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+    
+    // Form validation
+    document.getElementById('medicineForm').addEventListener('submit', function(e) {
+        const expiryDate = new Date(document.getElementById('{{ form.expiry_date.id_for_label }}').value);
+        const today = new Date();
+        
+        if (expiryDate < today) {
+            e.preventDefault();
+            alert('Expiry date cannot be in the past!');
+            return false;
+        }
+        
+        const purchasePrice = parseFloat(document.getElementById('{{ form.purchase_price.id_for_label }}').value);
+        const sellingPrice = parseFloat(document.getElementById('{{ form.selling_price.id_for_label }}').value);
+        const mrp = parseFloat(document.getElementById('{{ form.mrp.id_for_label }}').value);
+        
+        if (sellingPrice > mrp) {
+            e.preventDefault();
+            alert('Selling price cannot be greater than MRP!');
+            return false;
+        }
+        
+        if (purchasePrice > sellingPrice) {
+            if (!confirm('Purchase price is greater than selling price. Are you sure?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+</script>
+{% endblock %}

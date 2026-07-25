@@ -1,0 +1,179 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h4 class="mb-4">New Sale</h4>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Sale Details</h5>
+                </div>
+                <div class="card-body">
+                    <form id="saleForm" method="post">
+                        {% csrf_token %}
+                        {{ sale_form.as_p }}
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Add Items</h5>
+                    <button class="btn btn-sm btn-primary" onclick="addSaleItem()">
+                        <i class="bi bi-plus-circle"></i> Add Item
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm" id="saleItemsTable">
+                            <thead>
+                                <tr>
+                                    <th>Medicine</th>
+                                    <th>Qty</th>
+                                    <th>Sell Price</th>
+                                    <th>Discount</th>
+                                    <th>Total</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="saleItemsBody">
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
+                                    <td><strong id="saleGrandTotal">0.00</strong></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-success" onclick="submitSale()">
+                            <i class="bi bi-check-circle"></i> Complete Sale
+                        </button>
+                        <a href="{% url 'store:sale_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="saleItemsData" name="items_data" form="saleForm">
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const availableMedicines = {{ medicines_json|default:'[]'|safe }};
+    const customers = {{ customers_json|default:'[]'|safe }};
+
+    function addSaleItem() {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <select class="form-select form-select-sm sale-medicine-select" onchange="updateSaleItemDetails(this)">
+                    <option value="">Select Medicine</option>
+                    ${availableMedicines.map(m => `<option value="${m.id}" data-price="${m.selling_price}" data-stock="${m.quantity}">${m.name} (Stock: ${m.quantity})</option>`).join('')}
+                </select>
+            </td>
+            <td><input type="number" class="form-control form-control-sm sale-quantity" value="1" min="1" onchange="updateSaleRowTotal(this)"></td>
+            <td><input type="number" class="form-control form-control-sm sale-price" step="0.01" onchange="updateSaleRowTotal(this)"></td>
+            <td><input type="number" class="form-control form-control-sm sale-discount" step="0.01" value="0" onchange="updateSaleRowTotal(this)"></td>
+            <td class="sale-row-total">0.00</td>
+            <td><button class="btn btn-sm btn-danger" onclick="removeSaleRow(this)"><i class="bi bi-trash"></i></button></td>
+        `;
+        document.getElementById('saleItemsBody').appendChild(row);
+    }
+
+    function updateSaleItemDetails(select) {
+        const row = select.closest('tr');
+        const selected = availableMedicines.find(m => m.id == select.value);
+        if (selected) {
+            row.querySelector('.sale-price').value = selected.selling_price;
+            const maxQty = selected.quantity;
+            row.querySelector('.sale-quantity').max = maxQty;
+            row.querySelector('.sale-quantity').dataset.maxStock = maxQty;
+            updateSaleRowTotal(row.querySelector('.sale-quantity'));
+        }
+    }
+
+    function updateSaleRowTotal(input) {
+        const row = input.closest('tr');
+        const qty = parseInt(row.querySelector('.sale-quantity').value) || 0;
+        const price = parseFloat(row.querySelector('.sale-price').value) || 0;
+        const discount = parseFloat(row.querySelector('.sale-discount').value) || 0;
+        const maxStock = parseInt(row.querySelector('.sale-quantity').dataset.maxStock) || 0;
+        
+        if (qty > maxStock) {
+            alert(`Only ${maxStock} items available in stock`);
+            row.querySelector('.sale-quantity').value = maxStock;
+            return updateSaleRowTotal(row.querySelector('.sale-quantity'));
+        }
+        
+        const total = (qty * price) - discount;
+        row.querySelector('.sale-row-total').textContent = total.toFixed(2);
+        calculateSaleGrandTotal();
+    }
+
+    function calculateSaleGrandTotal() {
+        let total = 0;
+        document.querySelectorAll('.sale-row-total').forEach(el => {
+            total += parseFloat(el.textContent) || 0;
+        });
+        document.getElementById('saleGrandTotal').textContent = total.toFixed(2);
+        // Update the total amount field
+        document.querySelector('#id_total_amount').value = total.toFixed(2);
+    }
+
+    function removeSaleRow(btn) {
+        btn.closest('tr').remove();
+        calculateSaleGrandTotal();
+    }
+
+    function submitSale() {
+        const rows = document.querySelectorAll('#saleItemsBody tr');
+        const items = [];
+        let valid = true;
+        
+        rows.forEach(row => {
+            const medicineId = row.querySelector('.sale-medicine-select').value;
+            const quantity = parseInt(row.querySelector('.sale-quantity').value);
+            const sellingPrice = parseFloat(row.querySelector('.sale-price').value);
+            const discount = parseFloat(row.querySelector('.sale-discount').value) || 0;
+            
+            if (!medicineId || !quantity || !sellingPrice) {
+                valid = false;
+                row.style.backgroundColor = '#ffcccc';
+            } else {
+                row.style.backgroundColor = '';
+                items.push({
+                    medicine: parseInt(medicineId),
+                    quantity: quantity,
+                    selling_price: sellingPrice,
+                    discount: discount
+                });
+            }
+        });
+        
+        if (!valid) {
+            alert('Please fill all fields correctly');
+            return;
+        }
+        
+        if (items.length === 0) {
+            alert('Please add at least one item');
+            return;
+        }
+        
+        document.getElementById('saleItemsData').value = JSON.stringify(items);
+        document.getElementById('saleForm').submit();
+    }
+</script>
+{% endblock %}

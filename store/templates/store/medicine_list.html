@@ -1,0 +1,115 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Medicine Management</h4>
+        <a href="{% url 'store:medicine_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Medicine
+        </a>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" placeholder="Search by name, generic, batch..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'store:medicine_list' %}" class="btn btn-secondary w-100">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Medicine Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Batch</th>
+                            <th>Stock</th>
+                            <th>Price</th>
+                            <th>Expiry</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for medicine in medicines %}
+                        <tr>
+                            <td>
+                                <strong>{{ medicine.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ medicine.generic_name }}</small>
+                            </td>
+                            <td>{{ medicine.category.name }}</td>
+                            <td>{{ medicine.batch_number }}</td>
+                            <td>
+                                <span class="badge bg-{% if medicine.quantity <= 10 %}danger{% elif medicine.quantity <= 20 %}warning{% else %}success{% endif %}">
+                                    {{ medicine.quantity }}
+                                </span>
+                            </td>
+                            <td>${{ medicine.selling_price }}</td>
+                            <td>
+                                {% if medicine.is_expired %}
+                                <span class="badge bg-danger">Expired</span>
+                                {% else %}
+                                {{ medicine.expiry_date|date:"d M Y" }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if medicine.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'store:medicine_detail' medicine.id %}" class="btn btn-sm btn-info text-white" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'store:medicine_update' medicine.id %}" class="btn btn-sm btn-warning" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'store:medicine_delete' medicine.id %}" class="btn btn-sm btn-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">No medicines found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

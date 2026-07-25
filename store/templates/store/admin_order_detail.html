@@ -1,0 +1,315 @@
+{% extends 'store/base.html' %}
+
+{% block page_title %}Order #{{ order.order_number }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Order #{{ order.order_number }}</h4>
+        <div>
+            <a href="{% url 'store:admin_order_management' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Orders
+            </a>
+            <a href="{% url 'store:admin_order_invoice' order.id %}" class="btn btn-success" target="_blank">
+                <i class="bi bi-receipt"></i> Invoice
+            </a>
+        </div>
+    </div>
+
+    <!-- Order Status -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <h6 class="mb-0">Current Status:</h6>
+                            <h3 class="mb-0">
+                                <span class="badge bg-{{ order.get_status_badge }}" style="font-size: 1.2rem;">
+                                    {{ order.get_order_status_display }}
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="mb-0">Payment Status:</h6>
+                            <h3 class="mb-0">
+                                <span class="badge bg-{% if order.payment_status == 'PAID' %}success{% elif order.payment_status == 'PEN' %}warning{% else %}danger{% endif %}" style="font-size: 1.2rem;">
+                                    {{ order.get_payment_status_display }}
+                                </span>
+                            </h3>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="mb-0">Total Amount:</h6>
+                            <h3 class="mb-0 text-primary">${{ order.grand_total }}</h3>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="mb-0">Order Date:</h6>
+                            <h6 class="mb-0">{{ order.order_date|date:"d M Y H:i" }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Status Form -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Update Order Status</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_status">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <select name="order_status" class="form-select">
+                                    {% for status_code, status_label in status_choices %}
+                                        <option value="{{ status_code }}" {% if order.order_status == status_code %}selected{% endif %}>
+                                            {{ status_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-check"></i> Update
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-credit-card"></i> Update Payment</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_payment">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <select name="payment_status" class="form-select">
+                                    {% for status_code, status_label in payment_choices %}
+                                        <option value="{{ status_code }}" {% if order.payment_status == status_code %}selected{% endif %}>
+                                            {{ status_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-check"></i> Update
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Order Section -->
+    {% if order.order_status in 'PEN,PRO' %}
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Cancel Order</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="cancel_order">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <input type="text" name="cancellation_reason" class="form-control" 
+                                           placeholder="Reason for cancellation (optional)">
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to cancel this order?');">
+                                        <i class="bi bi-x-circle"></i> Cancel Order
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Order Details -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-list"></i> Order Items</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Medicine</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Discount</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ item.medicine.name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ item.medicine.generic_name }}</small>
+                                        </td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>${{ item.price }}</td>
+                                        <td>${{ item.discount }}</td>
+                                        <td><strong>${{ item.total }}</strong></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                                    <td>${{ order.total_amount }}</td>
+                                </tr>
+                                {% if order.discount_amount > 0 %}
+                                    <tr>
+                                        <td colspan="4" class="text-end"><strong>Discount:</strong></td>
+                                        <td>-${{ order.discount_amount }}</td>
+                                    </tr>
+                                {% endif %}
+                                {% if order.tax_amount > 0 %}
+                                    <tr>
+                                        <td colspan="4" class="text-end"><strong>Tax:</strong></td>
+                                        <td>${{ order.tax_amount }}</td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
+                                    <td><h5 class="mb-0 text-primary">${{ order.grand_total }}</h5></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Customer Information -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Name:</strong> {{ order.customer_name }}</p>
+                    <p><strong>Email:</strong> {{ order.customer_email }}</p>
+                    <p><strong>Phone:</strong> {{ order.customer_phone }}</p>
+                </div>
+            </div>
+            
+            <!-- Address -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-geo-alt"></i> Shipping Address</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ order.shipping_address|linebreaks }}</p>
+                </div>
+            </div>
+            
+            <!-- Add Note -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pencil"></i> Add Note</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_note">
+                        <div class="mb-2">
+                            <textarea name="note" class="form-control" rows="2" placeholder="Add note..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-plus-circle"></i> Add Note
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status History -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Status History</h5>
+                </div>
+                <div class="card-body">
+                    {% if status_history %}
+                        <div class="timeline">
+                            {% for history in status_history %}
+                                <div class="timeline-item">
+                                    <div class="timeline-badge">
+                                        <span class="badge bg-{{ history.get_status_display|lower|cut:' ' }}">
+                                            {{ history.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <p class="mb-0">{{ history.note|default:"Status updated" }}</p>
+                                        <small class="text-muted">
+                                            {{ history.created_at|date:"d M Y H:i" }} 
+                                            {% if history.changed_by %}
+                                                by {{ history.changed_by.username }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No status history available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+.timeline-item {
+    display: flex;
+    margin-bottom: 20px;
+    position: relative;
+}
+.timeline-badge {
+    flex: 0 0 120px;
+    padding-right: 20px;
+}
+.timeline-content {
+    flex: 1;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+.timeline-item:last-child .timeline-content {
+    border-bottom: none;
+}
+</style>
+{% endblock %}

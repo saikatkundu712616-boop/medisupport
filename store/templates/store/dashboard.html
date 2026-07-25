@@ -1,0 +1,202 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <h4 class="mb-4">Dashboard Overview</h4>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Medicines</h5>
+                    <h2 class="mb-0">{{ total_medicines }}</h2>
+                    <small>Active Products</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Low Stock</h5>
+                    <h2 class="mb-0">{{ low_stock_count }}</h2>
+                    <small>Items below reorder level</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Expired</h5>
+                    <h2 class="mb-0">{{ expired_count }}</h2>
+                    <small>Expired medicines</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Sales</h5>
+                    <h2 class="mb-0">${{ sales_data|last|default:'0' }}</h2>
+                    <small>Total sales today</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Chart -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Last 7 Days Sales</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'store:sale_create' %}" class="btn btn-success">
+                            <i class="bi bi-cart-check"></i> New Sale
+                        </a>
+                        <a href="{% url 'store:medicine_create' %}" class="btn btn-info text-white">
+                            <i class="bi bi-plus-circle"></i> Add Medicine
+                        </a>
+                        <a href="{% url 'store:admin_order_management' %}" class="btn btn-warning text-white">
+                            <i class="bi bi-file-earmark-text"></i> View Orders Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Sales</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_sales %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Invoice</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in recent_sales %}
+                                <tr>
+                                    <td>{{ sale.invoice_number }}</td>
+                                    <td>{{ sale.customer.name }}</td>
+                                    <td>${{ sale.total_amount }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if sale.status == 'COM' %}success{% elif sale.status == 'PEN' %}warning{% else %}danger{% endif %}">
+                                            {{ sale.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No recent sales</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Purchases</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_purchases %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Invoice</th>
+                                    <th>Supplier</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for purchase in recent_purchases %}
+                                <tr>
+                                    <td>{{ purchase.invoice_number }}</td>
+                                    <td>{{ purchase.supplier.name }}</td>
+                                    <td>${{ purchase.total_amount }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if purchase.status == 'COM' %}success{% elif purchase.status == 'PEN' %}warning{% else %}danger{% endif %}">
+                                            {{ purchase.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No recent purchases</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Sales Chart
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const salesData = {{ sales_data|safe }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: salesData.map(item => item.date),
+            datasets: [{
+                label: 'Daily Sales ($)',
+                data: salesData.map(item => item.total),
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

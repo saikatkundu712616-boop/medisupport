@@ -1,0 +1,355 @@
+{% extends 'store/base.html' %}
+
+{% block page_title %}Order Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Order Management</h4>
+        <div>
+            <a href="{% url 'store:admin_order_export' %}" class="btn btn-success">
+                <i class="bi bi-download"></i> Export Orders
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Total Orders</h6>
+                    <h2 class="mb-0">{{ total_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Pending</h6>
+                    <h2 class="mb-0">{{ pending_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Processing</h6>
+                    <h2 class="mb-0">{{ processing_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Shipped</h6>
+                    <h2 class="mb-0">{{ shipped_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Delivered</h6>
+                    <h2 class="mb-0">{{ delivered_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card stat-card bg-danger text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Cancelled</h6>
+                    <h2 class="mb-0">{{ cancelled_orders }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search orders..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        {% for status_code, status_label in status_choices %}
+                            <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                                {{ status_label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="date" class="form-control" value="{{ date_filter }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-filter"></i> Filter
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'store:admin_order_management' %}" class="btn btn-secondary w-100">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-2">
+                    <h6 class="mb-0">Bulk Actions:</h6>
+                </div>
+                <div class="col-md-3">
+                    <select id="bulkAction" class="form-select">
+                        <option value="">Select Action</option>
+                        <option value="cancel">Cancel Orders</option>
+                        <option value="delete">Delete Orders</option>
+                        <option value="update_status">Update Status</option>
+                    </select>
+                </div>
+                <div class="col-md-2" id="statusSelectWrapper" style="display: none;">
+                    <select id="bulkStatus" class="form-select">
+                        <option value="">Select Status</option>
+                        {% for status_code, status_label in status_choices %}
+                            <option value="{{ status_code }}">{{ status_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-danger" onclick="executeBulkAction()">
+                        <i class="bi bi-play"></i> Execute
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-secondary" onclick="selectAllOrders()">
+                        <i class="bi bi-check-all"></i> Select All
+                    </button>
+                    <button class="btn btn-secondary" onclick="deselectAllOrders()">
+                        <i class="bi bi-x"></i> Deselect All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAll" onclick="toggleAllOrders()"></th>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td><input type="checkbox" class="order-checkbox" value="{{ order.id }}"></td>
+                            <td>
+                                <strong>{{ order.order_number }}</strong>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ order.customer_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ order.customer_email }}</small>
+                                </div>
+                            </td>
+                            <td><strong>${{ order.grand_total }}</strong></td>
+                            <td>
+                                <span class="badge bg-{{ order.get_status_badge }}">
+                                    {{ order.get_order_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if order.payment_status == 'PAID' %}success{% elif order.payment_status == 'PEN' %}warning{% else %}danger{% endif %}">
+                                    {{ order.get_payment_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ order.order_date|date:"d M Y H:i" }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'store:admin_order_detail' order.id %}" class="btn btn-sm btn-info text-white" title="View/Manage">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'store:admin_order_invoice' order.id %}" class="btn btn-sm btn-secondary" title="Invoice" target="_blank">
+                                        <i class="bi bi-receipt"></i>
+                                    </a>
+                                    {% if order.order_status in 'PEN,PRO' %}
+                                        <button class="btn btn-sm btn-danger" onclick="quickCancelOrder({{ order.id }})" title="Cancel Order">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                                <p class="text-muted mt-2">No orders found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if orders.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if orders.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ orders.previous_page_number }}&status={{ status_filter }}&date={{ date_filter }}&search={{ search_query }}">
+                                    &laquo;
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% for num in orders.paginator.page_range %}
+                            <li class="page-item {% if orders.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}&status={{ status_filter }}&date={{ date_filter }}&search={{ search_query }}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                        {% if orders.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ orders.next_page_number }}&status={{ status_filter }}&date={{ date_filter }}&search={{ search_query }}">
+                                    &raquo;
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- CSRF Token for AJAX -->
+{% csrf_token %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Bulk action handling
+    document.getElementById('bulkAction').addEventListener('change', function() {
+        const statusWrapper = document.getElementById('statusSelectWrapper');
+        if (this.value === 'update_status') {
+            statusWrapper.style.display = 'block';
+        } else {
+            statusWrapper.style.display = 'none';
+        }
+    });
+
+    function executeBulkAction() {
+        const action = document.getElementById('bulkAction').value;
+        if (!action) {
+            alert('Please select an action.');
+            return;
+        }
+        
+        const selectedOrders = document.querySelectorAll('.order-checkbox:checked');
+        if (selectedOrders.length === 0) {
+            alert('Please select at least one order.');
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to ${action} ${selectedOrders.length} orders?`)) {
+            return;
+        }
+        
+        const orderIds = Array.from(selectedOrders).map(cb => cb.value);
+        const data = {
+            action: action,
+            order_ids: orderIds,
+            csrfmiddlewaretoken: document.querySelector('[name=csrfmiddlewaretoken]').value
+        };
+        
+        if (action === 'update_status') {
+            const status = document.getElementById('bulkStatus').value;
+            if (!status) {
+                alert('Please select a status.');
+                return;
+            }
+            data.status = status;
+        }
+        
+        fetch('/admin/orders/bulk-action/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error);
+        });
+    }
+
+    function selectAllOrders() {
+        document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = true);
+        document.getElementById('selectAll').checked = true;
+    }
+
+    function deselectAllOrders() {
+        document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('selectAll').checked = false;
+    }
+
+    function toggleAllOrders() {
+        const checked = document.getElementById('selectAll').checked;
+        document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = checked);
+    }
+
+    function quickCancelOrder(orderId) {
+        if (!confirm('Are you sure you want to cancel this order?')) {
+            return;
+        }
+        
+        fetch(`/admin/order/${orderId}/cancel/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Order cancelled successfully.');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+</script>
+{% endblock %}

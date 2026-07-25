@@ -1,0 +1,198 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h4 class="mb-4">Inventory Dashboard</h4>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Medicines</h5>
+                    <h2 class="mb-0">{{ total_medicines }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Value</h5>
+                    <h2 class="mb-0">${{ total_value|floatformat:2 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Low Stock</h5>
+                    <h2 class="mb-0">{{ low_stock_count }}</h2>
+                    <small>Items need reorder</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Expired</h5>
+                    <h2 class="mb-0">{{ expired_count }}</h2>
+                    <small>Items expired</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    {% if low_stock %}
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Low Stock Alert</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Category</th>
+                            <th>Current Stock</th>
+                            <th>Reorder Level</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for medicine in low_stock %}
+                        <tr>
+                            <td>{{ medicine.name }}</td>
+                            <td>{{ medicine.category.name }}</td>
+                            <td><span class="badge bg-danger">{{ medicine.quantity }}</span></td>
+                            <td>{{ medicine.reorder_level }}</td>
+                            <td>
+                                <a href="{% url 'store:purchase_create' %}" class="btn btn-sm btn-primary">
+                                    Order Now
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Expired Medicines -->
+    {% if expired %}
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="bi bi-x-circle"></i> Expired Medicines</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Batch Number</th>
+                            <th>Expiry Date</th>
+                            <th>Quantity</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for medicine in expired %}
+                        <tr>
+                            <td>{{ medicine.name }}</td>
+                            <td>{{ medicine.batch_number }}</td>
+                            <td class="text-danger">{{ medicine.expiry_date|date:"d M Y" }}</td>
+                            <td>{{ medicine.quantity }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" onclick="markExpired({{ medicine.id }})">
+                                    Mark as Waste
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Expiring Soon -->
+    {% if expiring_soon %}
+    <div class="card mb-4 border-warning">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0"><i class="bi bi-clock"></i> Expiring Soon (Next 30 Days)</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Batch Number</th>
+                            <th>Expiry Date</th>
+                            <th>Quantity</th>
+                            <th>Days Left</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for medicine in expiring_soon %}
+                        <tr>
+                            <td>{{ medicine.name }}</td>
+                            <td>{{ medicine.batch_number }}</td>
+                            <td>{{ medicine.expiry_date|date:"d M Y" }}</td>
+                            <td>{{ medicine.quantity }}</td>
+                            <td>
+                                <span class="badge bg-warning">
+                                    {{ medicine.expiry_date|timeuntil }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Search Inventory -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Search Inventory</h5>
+        </div>
+        <div class="card-body">
+            <a href="{% url 'store:inventory_search' %}" class="btn btn-primary">
+                <i class="bi bi-search"></i> Advanced Search
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function markExpired(medicineId) {
+        if (confirm('Are you sure you want to mark this medicine as expired/waste?')) {
+            // AJAX call to mark as expired
+            fetch(`/api/medicine/${medicineId}/mark-expired/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}
