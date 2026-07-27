@@ -2,14 +2,17 @@ from django.db import models
 
 # Create your models herefrom django.db import models
 from django.contrib.auth.models import User
-from django.utils import timezone
+from django.utils import timezone 
 from decimal import Decimal
 import uuid
+import random
+import string
+from datetime import datetime
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -67,7 +70,7 @@ class Medicine(models.Model):
     prescription_required = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -94,7 +97,7 @@ class Customer(models.Model):
     email = models.EmailField(blank=True)
     address = models.TextField(blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -120,7 +123,7 @@ class Sale(models.Model):
     sale_date = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=3, choices=STATUS_CHOICES, default=COMPLETED)
     notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -159,7 +162,7 @@ class StockMovement(models.Model):
     movement_type = models.CharField(max_length=3, choices=MOVEMENT_TYPES)
     reference = models.CharField(max_length=100)  # Sale or Purchase invoice number
     notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __str__(self):
         return f"{self.movement_type} - {self.medicine.name} - {self.quantity}"
@@ -225,47 +228,200 @@ class Order(models.Model):
         return self.order_number
 
 
-class OrderItem(models.Model):
-    order = models.ForeignKey(
-        Order,
-        on_delete=models.CASCADE,
-        related_name='items'
-    )
+    
 
-    medicine = models.ForeignKey(
-        Medicine,
-        on_delete=models.CASCADE
-    )
+class CustomerOrder(models.Model):
+    PENDING = 'PEN'
+    PROCESSING = 'PRO'
+    SHIPPED = 'SHP'
+    DELIVERED = 'DEL'
+    CANCELLED = 'CAN'
+    RETURNED = 'RET'
+    REFUNDED = 'REF'
+    
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (PROCESSING, 'Processing'),
+        (SHIPPED, 'Shipped'),
+        (DELIVERED, 'Delivered'),
+        (CANCELLED, 'Cancelled'),
+        (RETURNED, 'Returned'),
+        (REFUNDED, 'Refunded'),
+    ]
+    
+    PAYMENT_PENDING = 'PEN'
+    PAID = 'PAID'
+    FAILED = 'FLD'
+    REFUNDED = 'REF'
+    
+    PAYMENT_STATUS_CHOICES = [
+        (PAYMENT_PENDING, 'Payment Pending'),
+        (PAID, 'Paid'),
+        (FAILED, 'Failed'),
+        (REFUNDED, 'Refunded'),
+    ]
 
-    quantity = models.PositiveIntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-
-    @property
-    def total_price(self):
-        return self.quantity * self.price
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    order_number = models.CharField(max_length=20, unique=True, db_index=True)
+    
+    customer_name = models.CharField(max_length=200)
+    customer_email = models.EmailField()
+    customer_phone = models.CharField(max_length=15)
+    
+    shipping_address = models.TextField()
+    billing_address = models.TextField(blank=True)
+    
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    coupon_code = models.CharField(max_length=50, blank=True, null=True)
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    payment_status = models.CharField(max_length=4, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_PENDING)
+    payment_method = models.CharField(max_length=50, blank=True, null=True)
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    payment_date = models.DateTimeField(null=True, blank=True)
+    
+    order_status = models.CharField(max_length=3, choices=STATUS_CHOICES, default=PENDING)
+    
+    order_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    processed_date = models.DateTimeField(null=True, blank=True)
+    shipped_date = models.DateTimeField(null=True, blank=True)
+    delivered_date = models.DateTimeField(null=True, blank=True)
+    cancelled_date = models.DateTimeField(null=True, blank=True)
+    
+    tracking_number = models.CharField(max_length=100, blank=True, null=True)
+    courier_name = models.CharField(max_length=100, blank=True, null=True)
+    tracking_url = models.URLField(blank=True, null=True)
+    
+    notes = models.TextField(blank=True)
+    cancellation_reason = models.TextField(blank=True)
+    
+    is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-order_date']
 
     def __str__(self):
-        return f"{self.order.order_number} - {self.medicine.name}"
+        return f"Order #{self.order_number}"
 
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            self.order_number = self.generate_order_number()
+        self.calculate_totals()
+        super().save(*args, **kwargs)
 
-class OrderStatusHistory(models.Model):
-    order = models.ForeignKey(
-        Order,
-        on_delete=models.CASCADE,
-        related_name='status_history'
-    )
+    def generate_order_number(self):
+        date_str = datetime.now().strftime('%Y%m%d')
+        random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        return f'ORD-{date_str}-{random_str}'
 
-    status = models.CharField(max_length=3, choices=Order.STATUS_CHOICES)
-    note = models.TextField(blank=True)
+    def calculate_totals(self):
+        items = self.items.all()
+        self.subtotal = sum(item.total for item in items)
+        self.discount_amount = sum(item.discount for item in items)
+        taxable_amount = self.subtotal - self.discount_amount
+        self.tax_amount = (taxable_amount * self.tax_rate) / 100
+        self.total_amount = self.subtotal - self.discount_amount + self.tax_amount + self.shipping_charge
+        self.grand_total = self.total_amount
 
-    changed_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
+    def get_status_badge(self):
+        status_colors = {
+            'PEN': 'warning',
+            'PRO': 'info',
+            'SHP': 'primary',
+            'DEL': 'success',
+            'CAN': 'danger',
+            'RET': 'secondary',
+            'REF': 'secondary'
+        }
+        return status_colors.get(self.order_status, 'secondary')
 
+    def can_cancel(self):
+        return self.order_status in ['PEN', 'PRO'] and not self.is_deleted
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(CustomerOrder, on_delete=models.CASCADE, related_name='items')
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    
+    quantity = models.IntegerField(default=1)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    medicine_name = models.CharField(max_length=200, blank=True)
+    batch_number = models.CharField(max_length=50, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        return f"{self.medicine.name} x {self.quantity}"
+
+    def save(self, *args, **kwargs):
+        if not self.medicine_name and self.medicine:
+            self.medicine_name = self.medicine.name
+            self.batch_number = self.medicine.batch_number
+        self.total = (self.quantity * self.price) - self.discount + (self.quantity * self.tax)
+        super().save(*args, **kwargs)
+
+class OrderStatusHistory(models.Model):
+    order = models.ForeignKey(CustomerOrder, on_delete=models.CASCADE, related_name='status_history')
+    status = models.CharField(max_length=3, choices=CustomerOrder.STATUS_CHOICES)
+    note = models.TextField(blank=True)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
         return f"{self.order.order_number} - {self.get_status_display()}"
+
+class Cart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Cart - {self.user.username}"
+
+    def get_total(self):
+        return sum(item.get_total() for item in self.items.all())
+
+    def get_item_count(self):
+        return self.items.count()
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+    added_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['cart', 'medicine']
+
+    def __str__(self):
+        return f"{self.medicine.name} x {self.quantity}"
+
+    def get_total(self):
+        return self.quantity * self.medicine.selling_price
+
+class UserWishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE)
+    added_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'medicine']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.medicine.name}"
+

@@ -1,0 +1,119 @@
+{% extends 'Store/header.html' %}
+
+{% block title %}My Profile | MediSupport{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #06b6d4, #2563eb);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: white;
+        margin: 0 auto 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="profile-card text-center">
+                <div class="profile-avatar">
+                    {{ user.first_name|first|upper }}
+                </div>
+                <h5 class="fw-bold">{{ user.get_full_name }}</h5>
+                <p class="text-muted">@{{ user.username }}</p>
+                <p><i class="fas fa-envelope me-2"></i> {{ user.email }}</p>
+                <p><i class="fas fa-calendar me-2"></i> Joined: {{ user.date_joined|date:"d M Y" }}</p>
+                <hr>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded-3">
+                            <h6 class="fw-bold">{{ orders_count|default:0 }}</h6>
+                            <small class="text-muted">Orders</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded-3">
+                            <h6 class="fw-bold">0</h6>
+                            <small class="text-muted">Wishlist</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="profile-card">
+                <h6 class="fw-bold mb-3"><i class="fas fa-user-edit"></i> Edit Profile</h6>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name</label>
+                            <input type="text" name="first_name" class="form-control" 
+                                   value="{{ user.first_name }}" style="border-radius: 12px;">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" name="last_name" class="form-control" 
+                                   value="{{ user.last_name }}" style="border-radius: 12px;">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" 
+                               value="{{ user.email }}" style="border-radius: 12px;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="tel" name="phone" class="form-control" 
+                               placeholder="Enter phone number" style="border-radius: 12px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-save"></i> Update Profile
+                    </button>
+                </form>
+            </div>
+            
+            <div class="profile-card mt-4">
+                <h6 class="fw-bold mb-3"><i class="fas fa-key"></i> Change Password</h6>
+                <form method="post" action="{% url 'change_password' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" name="old_password" class="form-control" 
+                               style="border-radius: 12px;" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input type="password" name="new_password1" class="form-control" 
+                               style="border-radius: 12px;" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" name="new_password2" class="form-control" 
+                               style="border-radius: 12px;" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4">
+                        <i class="fas fa-key"></i> Change Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

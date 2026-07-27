@@ -1,0 +1,97 @@
+{% extends 'Store/header.html' %}
+
+{% block title %}My Orders | MediSupport{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-card {
+        background: white;
+        border-radius: 20px;
+        padding: 20px 25px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s;
+        margin-bottom: 20px;
+    }
+    
+    .order-card:hover {
+        box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    }
+    
+    .order-status {
+        font-weight: 700;
+        padding: 4px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+    }
+    
+    .order-status.delivered { background: #dcfce7; color: #16a34a; }
+    .order-status.shipped { background: #dbeafe; color: #2563eb; }
+    .order-status.processing { background: #fef3c7; color: #d97706; }
+    .order-status.pending { background: #fef3c7; color: #d97706; }
+    .order-status.cancelled { background: #fee2e2; color: #dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold mb-0"><i class="fas fa-box"></i> My Orders</h4>
+        <div>
+            <select class="form-select form-select-sm" style="border-radius: 12px; width: auto; display: inline-block;" 
+                    onchange="window.location.href='?status='+this.value">
+                <option value="">All Orders</option>
+                <option value="PEN" {% if status == 'PEN' %}selected{% endif %}>Pending</option>
+                <option value="PRO" {% if status == 'PRO' %}selected{% endif %}>Processing</option>
+                <option value="SHP" {% if status == 'SHP' %}selected{% endif %}>Shipped</option>
+                <option value="DEL" {% if status == 'DEL' %}selected{% endif %}>Delivered</option>
+                <option value="CAN" {% if status == 'CAN' %}selected{% endif %}>Cancelled</option>
+            </select>
+        </div>
+    </div>
+    
+    {% if orders %}
+        {% for order in orders %}
+            <div class="order-card">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <strong>Order #{{ order.order_number }}</strong>
+                        <br>
+                        <small class="text-muted">{{ order.order_date|date:"d M Y, h:i A" }}</small>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="order-status {{ order.order_status|lower }}">
+                            {{ order.get_order_status_display }}
+                        </span>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="fw-bold">₹{{ order.grand_total }}</span>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">{{ order.items.count }} items</small>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <a href="{% url 'store:order_detail' order.id %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        {% if order.order_status == 'PEN' or order.order_status == 'PRO' %}
+                            <a href="{% url 'store:cancel_order' order.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3" 
+                               onclick="return confirm('Are you sure you want to cancel this order?')">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-box-open" style="font-size: 4rem; color: #ccc;"></i>
+            <h5 class="mt-3">No Orders Yet</h5>
+            <p class="text-muted">Start shopping to see your orders here.</p>
+            <a href="{% url 'store:medicines' %}" class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-shopping-cart"></i> Start Shopping
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

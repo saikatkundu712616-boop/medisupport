@@ -69,3 +69,49 @@ class StockSearchForm(forms.Form):
     expiry_before = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     expiry_after = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     low_stock = forms.BooleanField(required=False)
+    from django import forms
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
+from .models import Category, Medicine, Customer, CustomerOrder
+
+# class UserRegistrationForm(UserCreationForm):
+#     email = forms.EmailField(required=True)
+#     first_name = forms.CharField(max_length=30, required=True)
+#     last_name = forms.CharField(max_length=30, required=True)
+#     phone = forms.CharField(max_length=15, required=False)
+
+#     class Meta:
+#         model = User
+#         fields = ['username', 'first_name', 'last_name', 'email', 'phone', 'password1', 'password2']
+
+# class UserProfileForm(forms.ModelForm):
+#     class Meta:
+#         model = User
+#         fields = ['first_name', 'last_name', 'email']
+
+
+class MedicineForm(forms.ModelForm):
+    class Meta:
+        model = Medicine
+        fields = [
+            'name', 'category', 'generic_name', 'manufacturer',
+            'purchase_price', 'selling_price', 'mrp', 'quantity', 'reorder_level',
+            'batch_number', 'expiry_date', 'description', 'image', 'is_active'
+        ]
+        widgets = {
+            'expiry_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
+        }
+
+class OrderCreateForm(forms.ModelForm):
+    class Meta:
+        model = CustomerOrder
+        fields = [
+            'customer_name', 'customer_email', 'customer_phone',
+            'shipping_address', 'billing_address', 'notes'
+        ]
+        widgets = {
+            'shipping_address': forms.Textarea(attrs={'rows': 4}),
+            'billing_address': forms.Textarea(attrs={'rows': 4}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
+        }

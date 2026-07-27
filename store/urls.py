@@ -4,11 +4,46 @@ from . import views
 app_name = 'store'
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('home/', views.home, name='home'),
-    path('register/', views.register, name='register'),
+    path('', views.home, name='home'),
+    path('search/', views.search_medicines, name='search_medicines'),
+    
+    # Authentication
     path('login/', views.user_login, name='login'),
+    path('register/', views.user_register, name='register'),
     path('logout/', views.user_logout, name='logout'),
+    path('profile/', views.user_profile, name='profile'),
+    path('change-password/', views.change_password, name='change_password'),
+    
+    # Medicines
+    path('medicines/', views.medicine_list, name='medicines'),
+    path('medicine/<int:pk>/', views.medicine_detail, name='medicine_detail'),
+    path('category/<str:slug>/', views.category_products, name='category_products'),
+    path('brand/<str:brand>/', views.brand_products, name='brand_products'),
+
+    
+    # Cart
+    path('cart/', views.view_cart, name='view_cart'),
+    path('cart/add/<int:medicine_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/remove/<int:medicine_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('cart/update/<int:medicine_id>/', views.update_cart, name='update_cart'),
+    path('checkout/', views.checkout, name='checkout'),
+
+    path('admin_dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    # Orders
+    path('orders/', views.my_orders, name='my_orders'),
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('order/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
+    
+    # Lab Tests
+    path('lab-tests/', views.lab_tests, name='lab_tests'),
+    
+    # Wishlist
+    path('wishlist/', views.wishlist, name='wishlist'),
+    path('wishlist/add/<int:medicine_id>/', views.add_to_wishlist, name='add_to_wishlist'),
+    path('wishlist/remove/<int:medicine_id>/', views.remove_from_wishlist, name='remove_from_wishlist'),
+    
+    # Prescription Upload
+    path('upload-prescription/', views.upload_prescription, name='upload_prescription'),
     
     # Category URLs
     path('categories/', views.category_list, name='category_list'),
@@ -43,6 +78,13 @@ urlpatterns = [
     path('order/<int:order_id>/invoice/', views.admin_order_invoice, name='admin_order_invoice'),
     path('orders/export/', views.admin_order_export, name='admin_order_export'),
     path('orders/bulk-action/', views.admin_bulk_order_action, name='admin_bulk_order_action'),
+
+    # #aidoctor
+    # path('ai-doctor/', views.ai_doctor, name='ai_doctor'),
+    # path('symptom-checker/', views.symptom_checker, name='symptom_checker'),
+    # path('lab-packages/', views.lab_packages, name='lab_packages'),
+    # path('wellness/', views.wellness, name='wellness'),
+    # path('health-insurance/', views.health_insurance, name='health_insurance'),
 
     # API URLs
     path('api/get-medicine-details/', views.get_medicine_details, name='get_medicine_details'),

@@ -1,0 +1,167 @@
+{% extends 'Store/header.html' %}
+
+{% block title %}Cart | MediSupport{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cart-item {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+    
+    .cart-item:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    
+    .cart-summary {
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
+        border: 1px solid #e5e7eb;
+        position: sticky;
+        top: 90px;
+    }
+    
+    .cart-summary .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .cart-summary .summary-item.total {
+        font-weight: 800;
+        font-size: 1.2rem;
+        border-bottom: none;
+        padding-top: 15px;
+    }
+    
+    .qty-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .qty-control button {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid #e5e7eb;
+        background: white;
+        font-weight: 700;
+        transition: all 0.3s;
+    }
+    
+    .qty-control button:hover {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+    }
+    
+    .qty-control .qty {
+        font-weight: 700;
+        min-width: 30px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h4 class="fw-bold mb-4"><i class="fas fa-shopping-cart"></i> Shopping Cart</h4>
+    
+    {% if cart_items %}
+        <div class="row g-4">
+            <div class="col-lg-8">
+                {% for item in cart_items %}
+                    <div class="cart-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-2">
+                                <div style="width: 80px; height: 80px; background: #f8fafc; border-radius: 12px; 
+                                            display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                    {% if item.medicine.image %}
+                                        <img src="{{ item.medicine.image.url }}" alt="{{ item.medicine.name }}" 
+                                             style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                    {% else %}
+                                        <span style="font-size: 2rem;">💊</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="fw-bold mb-1">{{ item.medicine.name }}</h6>
+                                <small class="text-muted">{{ item.medicine.generic_name|default:'' }}</small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="qty-control">
+                                    <form method="post" action="{% url 'store:update_cart' item.medicine.id %}" class="d-flex align-items-center gap-2">
+                                        {% csrf_token %}
+                                        <button type="submit" name="quantity" value="{{ item.quantity|add:'-1' }}" 
+                                                {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
+                                        <span class="qty">{{ item.quantity }}</span>
+                                        <button type="submit" name="quantity" value="{{ item.quantity|add:'1' }}"
+                                                {% if item.quantity >= item.medicine.quantity %}disabled{% endif %}>+</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="fw-bold">₹{{ item.subtotal }}</span>
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <a href="{% url 'store:remove_from_cart' item.medicine.id %}" class="text-danger" 
+                                   onclick="return confirm('Remove this item from cart?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="cart-summary">
+                    <h6 class="fw-bold mb-3">Order Summary</h6>
+                    
+                    <div class="summary-item">
+                        <span>Subtotal</span>
+                        <span>₹{{ total }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Delivery Charges</span>
+                        <span>₹40</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Discount</span>
+                        <span class="text-success">-₹0</span>
+                    </div>
+                    <div class="summary-item total">
+                        <span>Total</span>
+                        <span>₹{{ total|add:40 }}</span>
+                    </div>
+                    
+                    <a href="{% url 'store:checkout' %}" class="btn btn-primary w-100 rounded-pill py-3 mt-3"
+                       style="background: linear-gradient(135deg, #06b6d4, #2563eb); border: none; font-weight: 700;">
+                        <i class="fas fa-credit-card"></i> Proceed to Checkout
+                    </a>
+                    
+                    <a href="{% url 'store:medicines' %}" class="btn btn-outline-secondary w-100 rounded-pill mt-2">
+                        <i class="fas fa-arrow-left"></i> Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-cart" style="font-size: 4rem; color: #ccc;"></i>
+            <h5 class="mt-3">Your Cart is Empty</h5>
+            <p class="text-muted">Start adding medicines to your cart.</p>
+            <a href="{% url 'store:medicines' %}" class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-shopping-cart"></i> Browse Medicines
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
