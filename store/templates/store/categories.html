@@ -1,0 +1,219 @@
+{% extends 'store/header.html' %}
+{% load static %}
+
+{% block title %}Categories | MediStore{% endblock %}
+
+{% block extra_css %}
+<style>
+    .categories-header {
+        background: linear-gradient(135deg, #f8fafc, #eef2ff);
+        padding: 40px 0;
+        border-radius: 0 0 30px 30px;
+        margin-bottom: 40px;
+    }
+    
+    .categories-header h2 {
+        font-weight: 800;
+        color: #0f172a;
+    }
+    
+    .categories-header p {
+        color: #64748b;
+    }
+    
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 25px;
+        margin: 30px 0;
+    }
+    
+    .category-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        transition: all 0.3s;
+        border: 1px solid #e5e7eb;
+        text-decoration: none;
+        color: #0f172a;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .category-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #3498db, #2ecc71);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .category-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .category-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 40px rgba(52, 152, 219, 0.15);
+        border-color: #3498db;
+    }
+    
+    .category-card .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #eef2ff, #dbeafe);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        font-size: 2.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .category-card:hover .icon-wrapper {
+        background: linear-gradient(135deg, #3498db, #2ecc71);
+        transform: scale(1.1);
+    }
+    
+    .category-card:hover .icon-wrapper i {
+        color: white;
+    }
+    
+    .category-card .icon-wrapper i {
+        color: #3498db;
+        transition: all 0.3s ease;
+    }
+    
+    .category-card h5 {
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .category-card .medicine-count {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+    
+    .category-card .medicine-count span {
+        color: #3498db;
+        font-weight: 700;
+    }
+    
+    .category-card .view-btn {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 6px 20px;
+        border-radius: 50px;
+        background: #eef2ff;
+        color: #2563eb;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .category-card:hover .view-btn {
+        background: #3498db;
+        color: white;
+    }
+    
+    .no-categories {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .no-categories i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 20px;
+    }
+    
+    .no-categories h4 {
+        color: #0f172a;
+        font-weight: 700;
+    }
+    
+    .no-categories p {
+        color: #64748b;
+    }
+    
+    @media (max-width: 768px) {
+        .category-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .category-card {
+            padding: 20px;
+        }
+        
+        .category-card .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Categories Header -->
+<div class="categories-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2><i class="fas fa-tags text-primary me-2"></i> Categories</h2>
+                <p>Browse medicines by category for easy shopping</p>
+            </div>
+            <div class="col-lg-4">
+                <form class="d-flex" method="get" action="{% url 'store:search_medicines' %}">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" 
+                               placeholder="Search in categories...">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    {% if categories %}
+        <div class="category-grid">
+            {% for category in categories %}
+            
+                    <a href="{% url 'store:category_details' category.id %}" class="category-card">
+                        <div class="icon-wrapper">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <h5>{{ category.name }}</h5>
+                        <p class="medicine-count">
+                            <span>{{ category.medicine_count }}</span> medicines available
+                        </p>
+                        <span class="view-btn">
+                            <i class="fas fa-arrow-right"></i> View All
+                        </span>
+                    </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-categories">
+            <i class="fas fa-folder-open"></i>
+            <h4>No Categories Found</h4>
+            <p>Categories will appear here once medicines are added.</p>
+            <a href="{% url 'store:medicines' %}" class="btn btn-primary rounded-pill px-4 mt-3">
+                <i class="fas fa-capsules"></i> Browse Medicines
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

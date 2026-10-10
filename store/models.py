@@ -314,7 +314,7 @@ class CustomerOrder(models.Model):
     def save(self, *args, **kwargs):
         if not self.order_number:
             self.order_number = self.generate_order_number()
-        self.calculate_totals()
+        # self.calculate_totals()
         super().save(*args, **kwargs)
 
     def generate_order_number(self):
@@ -323,7 +323,11 @@ class CustomerOrder(models.Model):
         return f'ORD-{date_str}-{random_str}'
 
     def calculate_totals(self):
+        if not self.pk:
+           return  # Skip if order isn't saved yet
         items = self.items.all()
+        if not items.exists():
+          return
         self.subtotal = sum(item.total for item in items)
         self.discount_amount = sum(item.discount for item in items)
         taxable_amount = self.subtotal - self.discount_amount
@@ -424,4 +428,73 @@ class UserWishlist(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.medicine.name}"
+
+# ==================== USER ADDRESS (NEW) ====================
+class UserAddress(models.Model):
+    """✅ ADDED - UserAddress model was missing"""
+    HOME = 'HOM'
+    WORK = 'WRK'
+    OTHER = 'OTH'
+    
+    ADDRESS_TYPES = [
+        (HOME, 'Home'),
+        (WORK, 'Work'),
+        (OTHER, 'Other'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')
+    address_type = models.CharField(max_length=3, choices=ADDRESS_TYPES, default=HOME)
+    address_label = models.CharField(max_length=50, blank=True)
+    
+    name = models.CharField(max_length=200)
+    phone = models.CharField(max_length=15)
+    alternate_phone = models.CharField(max_length=15, blank=True)
+    email = models.EmailField(blank=True)
+    
+    address_line1 = models.TextField()
+    address_line2 = models.TextField(blank=True)
+    landmark = models.CharField(max_length=200, blank=True)
+    
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=10)
+    country = models.CharField(max_length=100, default='India')
+    
+    latitude = models.DecimalField(max_digits=11, decimal_places=8, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=11, decimal_places=8, null=True, blank=True)
+    
+    is_default = models.BooleanField(default=False)
+    is_billing = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "User Addresses"
+        ordering = ['-is_default', '-created_at']
+
+    def __str__(self):
+        return f"{self.name} - {self.address_line1[:30]}..."
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            UserAddress.objects.filter(
+                user=self.user, is_default=True
+            ).exclude(id=self.id).update(is_default=False)
+        if self.is_billing:
+            UserAddress.objects.filter(
+                user=self.user, is_billing=True
+            ).exclude(id=self.id).update(is_billing=False)
+        super().save(*args, **kwargs)
+
+    def get_full_address(self):
+        parts = [self.address_line1]
+        if self.address_line2:
+            parts.append(self.address_line2)
+        if self.landmark:
+            parts.append(f"Landmark: {self.landmark}")
+        parts.append(f"{self.city}, {self.state} - {self.pincode}")
+        parts.append(self.country)
+        return ", ".join(parts)
 

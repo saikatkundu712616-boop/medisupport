@@ -1,0 +1,931 @@
+{% extends 'store/header.html' %}
+{% load static %}
+
+{% block title %}{{ medicine.name }} | MediStore{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== BREADCRUMB ===== */
+    .detail-breadcrumb {
+        background: transparent;
+        padding: 15px 0;
+        margin: 0;
+    }
+    
+    .detail-breadcrumb .breadcrumb-item a {
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+    
+    .detail-breadcrumb .breadcrumb-item a:hover {
+        color: #3498db;
+    }
+    
+    .detail-breadcrumb .breadcrumb-item.active {
+        color: #0f172a;
+        font-weight: 600;
+    }
+    
+    /* ===== MAIN CONTENT ===== */
+    .medicine-detail-wrapper {
+        padding: 20px 0 60px;
+    }
+    
+    .medicine-detail-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 4px 30px rgba(0,0,0,0.04);
+        border: 1px solid #e5e7eb;
+    }
+    
+    /* ===== IMAGE SECTION ===== */
+    .medicine-image-section {
+        padding: 40px;
+        background: #f8fafc;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .medicine-image-section img {
+        max-height: 400px;
+        max-width: 100%;
+        object-fit: contain;
+        transition: transform 0.5s ease;
+    }
+    
+    .medicine-image-section img:hover {
+        transform: scale(1.05);
+    }
+    
+    .medicine-image-section .placeholder-image {
+        font-size: 8rem;
+        opacity: 0.2;
+    }
+    
+    .image-badges {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .image-badges .badge-item {
+        padding: 4px 16px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-discount {
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
+        color: white;
+    }
+    
+    .badge-prescription {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .badge-stock {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+    
+    .badge-stock.out {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    /* ===== INFO SECTION ===== */
+    .medicine-info-section {
+        padding: 40px 45px 40px 30px;
+    }
+    
+    .medicine-info-section .category-tag {
+        display: inline-block;
+        font-size: 0.75rem;
+        background: #eef2ff;
+        color: #2563eb;
+        padding: 4px 16px;
+        border-radius: 50px;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+    
+    .medicine-info-section h1 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+    
+    .medicine-info-section .generic-name {
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+    
+    .medicine-info-section .manufacturer {
+        color: #64748b;
+        font-size: 0.95rem;
+        margin-bottom: 20px;
+    }
+    
+    .medicine-info-section .manufacturer i {
+        color: #3498db;
+    }
+    
+    /* ===== PRICE SECTION ===== */
+    .price-section {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .price-section .current-price {
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: #16a34a;
+    }
+    
+    .price-section .mrp-price {
+        font-size: 1.2rem;
+        color: #94a3b8;
+        text-decoration: line-through;
+    }
+    
+    .price-section .discount-percent {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #16a34a;
+        background: #dcfce7;
+        padding: 4px 16px;
+        border-radius: 50px;
+    }
+    
+    /* ===== STOCK STATUS ===== */
+    .stock-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .stock-status .stock-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .stock-status .stock-dot.in-stock {
+        background: #22c55e;
+    }
+    
+    .stock-status .stock-dot.low-stock {
+        background: #f59e0b;
+        animation: pulse 1.5s infinite;
+    }
+    
+    .stock-status .stock-dot.out-stock {
+        background: #ef4444;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+    
+    .stock-status .stock-text {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .stock-status .stock-text.in-stock {
+        color: #16a34a;
+    }
+    
+    .stock-status .stock-text.low-stock {
+        color: #d97706;
+    }
+    
+    .stock-status .stock-text.out-stock {
+        color: #dc2626;
+    }
+    
+    .stock-status .stock-quantity {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+    
+    /* ===== QUANTITY ===== */
+    .quantity-section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .quantity-section label {
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0;
+    }
+    
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .quantity-control button {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: #f8fafc;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #0f172a;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .quantity-control button:hover {
+        background: #3498db;
+        color: white;
+    }
+    
+    .quantity-control button:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+    
+    .quantity-control input {
+        width: 50px;
+        height: 40px;
+        border: none;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+        background: white;
+        outline: none;
+    }
+    
+    /* ===== BUTTONS ===== */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .btn-add-to-cart {
+        flex: 1;
+        padding: 14px 30px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        border: none;
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-width: 200px;
+    }
+    
+    .btn-add-to-cart:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(52, 152, 219, 0.35);
+        color: white;
+    }
+    
+    .btn-add-to-cart:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    .btn-add-to-cart.out-of-stock {
+        background: #94a3b8;
+    }
+    
+    .btn-wishlist {
+        padding: 14px 20px;
+        border-radius: 14px;
+        border: 2px solid #e5e7eb;
+        background: white;
+        color: #0f172a;
+        font-weight: 600;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 60px;
+    }
+    
+    .btn-wishlist:hover {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: #fef2f2;
+    }
+    
+    .btn-wishlist.active {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: #fef2f2;
+    }
+    
+    .btn-wishlist.active i {
+        color: #ef4444;
+    }
+    
+    /* ===== INFO TABS ===== */
+    .info-tabs {
+        margin-top: 30px;
+    }
+    
+    .info-tabs .nav-tabs {
+        border: none;
+        gap: 10px;
+    }
+    
+    .info-tabs .nav-tabs .nav-link {
+        border: none;
+        border-radius: 12px;
+        padding: 10px 24px;
+        font-weight: 600;
+        color: #64748b;
+        background: #f1f5f9;
+        transition: all 0.3s;
+    }
+    
+    .info-tabs .nav-tabs .nav-link:hover {
+        background: #eef2ff;
+        color: #2563eb;
+    }
+    
+    .info-tabs .nav-tabs .nav-link.active {
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+    }
+    
+    .info-tabs .tab-content {
+        padding: 25px 0;
+    }
+    
+    .info-tabs .tab-content .tab-pane {
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .info-tabs .tab-content h6 {
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 10px;
+    }
+    
+    .info-tabs .tab-content p {
+        color: #475569;
+        line-height: 1.7;
+    }
+    
+    .info-tabs .tab-content ul {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .info-tabs .tab-content ul li {
+        padding: 8px 0;
+        color: #475569;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .info-tabs .tab-content ul li:last-child {
+        border-bottom: none;
+    }
+    
+    .info-tabs .tab-content ul li strong {
+        color: #0f172a;
+    }
+    
+    /* ===== RELATED PRODUCTS ===== */
+    .related-products {
+        margin-top: 50px;
+    }
+    
+    .related-products h3 {
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 25px;
+    }
+    
+    .related-products h3 i {
+        color: #3498db;
+    }
+    
+    .related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 25px;
+    }
+    
+    .related-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s;
+        text-decoration: none;
+        color: #0f172a;
+    }
+    
+    .related-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        border-color: #3498db;
+    }
+    
+    .related-card .card-img {
+        height: 140px;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 15px;
+    }
+    
+    .related-card .card-img img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    
+    .related-card .card-img .placeholder {
+        font-size: 3rem;
+        opacity: 0.2;
+    }
+    
+    .related-card .card-body {
+        padding: 15px;
+    }
+    
+    .related-card .card-body h6 {
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    
+    .related-card .card-body .related-price {
+        font-weight: 800;
+        color: #16a34a;
+        font-size: 1.1rem;
+    }
+    
+    .related-card .card-body .related-mrp {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-decoration: line-through;
+        margin-left: 6px;
+    }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 992px) {
+        .medicine-image-section {
+            padding: 30px;
+            min-height: 250px;
+        }
+        
+        .medicine-image-section img {
+            max-height: 250px;
+        }
+        
+        .medicine-info-section {
+            padding: 25px;
+        }
+        
+        .medicine-info-section h1 {
+            font-size: 1.6rem;
+        }
+        
+        .price-section .current-price {
+            font-size: 1.8rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .medicine-image-section {
+            padding: 20px;
+            min-height: 200px;
+        }
+        
+        .medicine-image-section img {
+            max-height: 200px;
+        }
+        
+        .medicine-info-section {
+            padding: 20px;
+        }
+        
+        .medicine-info-section h1 {
+            font-size: 1.4rem;
+        }
+        
+        .price-section {
+            padding: 15px 20px;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .price-section .current-price {
+            font-size: 1.6rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-add-to-cart {
+            min-width: 100%;
+        }
+        
+        .btn-wishlist {
+            min-width: 100%;
+        }
+        
+        .info-tabs .nav-tabs {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+        
+        .info-tabs .nav-tabs .nav-link {
+            white-space: nowrap;
+            font-size: 0.85rem;
+            padding: 8px 16px;
+        }
+        
+        .related-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .medicine-info-section h1 {
+            font-size: 1.2rem;
+        }
+        
+        .related-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .related-card .card-img {
+            height: 100px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container medicine-detail-wrapper">
+    <!-- ===== BREADCRUMB ===== -->
+    <nav aria-label="breadcrumb" class="detail-breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'store:home' %}"><i class="fas fa-home"></i> Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'store:category_list' %}">Categories</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'store:category_details' medicine.category.id %}">{{ medicine.category.name }}</a></li>
+            <li class="breadcrumb-item active">{{ medicine.name|truncatechars:30 }}</li>
+        </ol>
+    </nav>
+
+    <!-- ===== MAIN CARD ===== -->
+    <div class="medicine-detail-card">
+        <div class="row g-0">
+            <!-- Image Section -->
+            <div class="col-lg-5">
+                <div class="medicine-image-section">
+                    {% if medicine.image %}
+                        <img src="{{ medicine.image.url }}" alt="{{ medicine.name }}">
+                    {% else %}
+                        <div class="placeholder-image">💊</div>
+                    {% endif %}
+                    
+                    <!-- Badges -->
+                    <div class="image-badges">
+                        {% if medicine.discount_percentage > 0 %}
+                            <span class="badge-item badge-discount">
+                                🔥 {{ medicine.discount_percentage|floatformat:0 }}% OFF
+                            </span>
+                        {% endif %}
+                        {% if medicine.prescription_required %}
+                            <span class="badge-item badge-prescription">
+                                📋 Prescription Required
+                            </span>
+                        {% endif %}
+                        {% if medicine.quantity > 0 %}
+                            <span class="badge-item badge-stock">
+                                ✅ In Stock
+                            </span>
+                        {% else %}
+                            <span class="badge-item badge-stock out">
+                                ❌ Out of Stock
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Info Section -->
+            <div class="col-lg-7">
+                <div class="medicine-info-section">
+                    <span class="category-tag">{{ medicine.category.name }}</span>
+                    
+                    <h1>{{ medicine.name }}</h1>
+                    <p class="generic-name">{{ medicine.generic_name|default:"No generic name" }}</p>
+                    <p class="manufacturer">
+                        <i class="fas fa-building"></i> 
+                        Manufacturer: {{ medicine.manufacturer|default:"Not specified" }}
+                    </p>
+                    
+                    <!-- Price -->
+                    <div class="price-section">
+                        <span class="current-price">₹{{ medicine.selling_price }}</span>
+                        <span class="mrp-price">₹{{ medicine.mrp }}</span>
+                        {% if medicine.discount_percentage > 0 %}
+                            <span class="discount-percent">{{ medicine.discount_percentage|floatformat:0 }}% OFF</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Stock Status -->
+                    <div class="stock-status">
+                        {% if medicine.quantity > 10 %}
+                            <span class="stock-dot in-stock"></span>
+                            <span class="stock-text in-stock">In Stock</span>
+                            <span class="stock-quantity">({{ medicine.quantity }} units available)</span>
+                        {% elif medicine.quantity > 0 %}
+                            <span class="stock-dot low-stock"></span>
+                            <span class="stock-text low-stock">Low Stock</span>
+                            <span class="stock-quantity">(Only {{ medicine.quantity }} units left)</span>
+                        {% else %}
+                            <span class="stock-dot out-stock"></span>
+                            <span class="stock-text out-stock">Out of Stock</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Quantity -->
+                    <div class="quantity-section">
+                        <label for="quantityInput">Quantity:</label>
+                        <div class="quantity-control">
+                            <button type="button" onclick="updateQuantity(-1)" id="qtyMinus">−</button>
+                            <input type="number" id="quantityInput" value="1" min="1" max="{{ medicine.quantity }}" readonly>
+                            <button type="button" onclick="updateQuantity(1)" id="qtyPlus">+</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <form method="post" action="{% url 'store:add_to_cart' medicine.id %}" style="flex: 1;" id="addToCartForm">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" id="cartQuantity" value="1">
+                            <button type="submit" class="btn-add-to-cart {% if medicine.quantity == 0 %}out-of-stock{% endif %}" 
+                                    {% if medicine.quantity == 0 %}disabled{% endif %}>
+                                {% if medicine.quantity == 0 %}
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                {% else %}
+                                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                                {% endif %}
+                            </button>
+                        </form>
+                        
+                        <button class="btn-wishlist {% if in_wishlist %}active{% endif %}" 
+                                onclick="toggleWishlist({{ medicine.id }})">
+                            <i class="{% if in_wishlist %}fas{% else %}far{% endif %} fa-heart"></i>
+                            <span id="wishlistText">{% if in_wishlist %}Remove{% else %}Save{% endif %}</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Info Tabs -->
+                    <div class="info-tabs">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#description">
+                                    <i class="fas fa-info-circle"></i> Description
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#composition">
+                                    <i class="fas fa-flask"></i> Composition
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#details">
+                                    <i class="fas fa-list"></i> Details
+                                </a>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="description">
+                                <h6>About this medicine</h6>
+                                <p>{{ medicine.description|default:"No description available for this medicine." }}</p>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="composition">
+                                <h6>Composition</h6>
+                                <p>{{ medicine.composition|default:"Composition information not available." }}</p>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="details">
+                                <h6>Product Details</h6>
+                                <ul>
+                                    <li><strong>Medicine Type:</strong> {{ medicine.get_medicine_type_display }}</li>
+                                    <li><strong>Generic Name:</strong> {{ medicine.generic_name|default:"N/A" }}</li>
+                                    <li><strong>Manufacturer:</strong> {{ medicine.manufacturer|default:"N/A" }}</li>
+                                    <li><strong>Batch Number:</strong> {{ medicine.batch_number|default:"N/A" }}</li>
+                                    <li><strong>Expiry Date:</strong> 
+                                        {% if medicine.expiry_date %}
+                                            {{ medicine.expiry_date|date:"d M Y" }}
+                                            {% if medicine.is_expired %}
+                                                <span class="text-danger"> (Expired)</span>
+                                            {% endif %}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </li>
+                                    <li><strong>Prescription Required:</strong> 
+                                        {% if medicine.prescription_required %}
+                                            <span class="text-warning">Yes</span>
+                                        {% else %}
+                                            <span class="text-success">No</span>
+                                        {% endif %}
+                                    </li>
+                                    <li><strong>Added:</strong> {{ medicine.created_at|date:"d M Y" }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== RELATED PRODUCTS ===== -->
+    {% if related_medicines %}
+        <div class="related-products">
+            <h3><i class="fas fa-capsules"></i> Related Medicines</h3>
+            <div class="related-grid">
+                {% for related in related_medicines %}
+                    <a href="{% url 'store:medicine_detail' related.id %}" class="related-card">
+                        <div class="card-img">
+                            {% if related.image %}
+                                <img src="{{ related.image.url }}" alt="{{ related.name }}" loading="lazy">
+                            {% else %}
+                                <div class="placeholder">💊</div>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <h6>{{ related.name|truncatechars:20 }}</h6>
+                            <span class="related-price">₹{{ related.selling_price }}</span>
+                            <span class="related-mrp">₹{{ related.mrp }}</span>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- ===== TOAST NOTIFICATION ===== -->
+<div id="toastNotification" style="position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 14px 24px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); font-weight: 600; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all 0.4s ease; font-size: 14px;"></div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+    // ===== QUANTITY CONTROL =====
+    function updateQuantity(change) {
+        const input = document.getElementById('quantityInput');
+        let value = parseInt(input.value) + change;
+        const max = parseInt(input.max) || 999;
+        
+        if (value < 1) value = 1;
+        if (value > max) value = max;
+        
+        input.value = value;
+        document.getElementById('cartQuantity').value = value;
+        
+        // Update button states
+        document.getElementById('qtyMinus').disabled = (value <= 1);
+        document.getElementById('qtyPlus').disabled = (value >= max);
+    }
+    
+    // Initialize quantity buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('quantityInput');
+        const max = parseInt(input.max) || 999;
+        document.getElementById('qtyMinus').disabled = true;
+        if (max <= 1) {
+            document.getElementById('qtyPlus').disabled = true;
+        }
+    });
+    
+    // ===== WISHLIST TOGGLE =====
+    function toggleWishlist(medicineId) {
+        const btn = event.currentTarget;
+        const icon = btn.querySelector('i');
+        const text = btn.querySelector('#wishlistText');
+        
+        if (btn.classList.contains('active')) {
+            // Remove from wishlist
+            fetch(`/wishlist/remove/{{ medicine.id }}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.classList.remove('active');
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                    text.textContent = 'Save';
+                    showToast('Removed from wishlist');
+                }
+            })
+            .catch(error => {
+                showToast('Error: ' + error);
+            });
+        } else {
+            // Add to wishlist
+            fetch(`/wishlist/add/${medicineId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.classList.add('active');
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    text.textContent = 'Remove';
+                    showToast('Added to wishlist ❤️');
+                } else {
+                    showToast(data.message);
+                }
+            })
+            .catch(error => {
+                showToast('Error: ' + error);
+            });
+        }
+    }
+    
+    // ===== GET CSRF TOKEN =====
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+    
+    // ===== TOAST NOTIFICATION =====
+    function showToast(message) {
+        const toast = document.getElementById('toastNotification');
+        toast.textContent = message;
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+        
+        setTimeout(() => {
+            toast.style.transform = 'translateY(100px)';
+            toast.style.opacity = '0';
+        }, 3000);
+    }
+</script>
+{% endblock %}

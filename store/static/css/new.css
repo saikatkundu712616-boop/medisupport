@@ -1,0 +1,585 @@
+/* ===== MEDICINE CARD ===== */
+.medicine-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    position: relative;
+    cursor: pointer;
+}
+
+.medicine-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    border-color: #3498db;
+}
+
+.medicine-card .card-img {
+    height: 200px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.medicine-card .card-img img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    transition: transform 0.4s ease;
+}
+
+.medicine-card:hover .card-img img {
+    transform: scale(1.05);
+}
+
+.medicine-card .card-img .placeholder {
+    font-size: 4rem;
+    opacity: 0.2;
+}
+
+.medicine-card .discount-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: white;
+    padding: 3px 12px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    z-index: 2;
+}
+
+.medicine-card .card-body {
+    padding: 18px 20px 20px;
+}
+
+.medicine-card .card-body .category-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    background: #eef2ff;
+    color: #2563eb;
+    padding: 2px 12px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.medicine-card .card-body h5 {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: #0f172a;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.medicine-card .card-body .price {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #16a34a;
+}
+
+.medicine-card .card-body .mrp {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    text-decoration: line-through;
+    margin-left: 6px;
+}
+
+.medicine-card .card-body .stock-badge {
+    font-size: 0.7rem;
+    padding: 3px 12px;
+    border-radius: 50px;
+}
+
+/* ===== BUTTONS ===== */
+.medicine-card .card-body .btn-add-cart {
+    width: 100%;
+    border-radius: 12px;
+    padding: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    background: linear-gradient(135deg, #3498db, #2563eb);
+    border: none;
+    color: white;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.medicine-card .card-body .btn-add-cart:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.35);
+    color: white;
+}
+
+.medicine-card .card-body .btn-add-cart:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.medicine-card .card-body .btn-buy-now {
+    width: 100%;
+    border-radius: 12px;
+    padding: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: none;
+    color: white;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.medicine-card .card-body .btn-buy-now:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 5px 20px rgba(245, 158, 11, 0.35);
+    color: white;
+}
+
+.medicine-card .card-body .btn-buy-now:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 576px) {
+    .medicine-card .card-body .d-flex.gap-2 {
+        flex-direction: column;
+    }
+    
+    .medicine-card .card-body .btn-add-cart,
+    .medicine-card .card-body .btn-buy-now {
+        width: 100%;
+    }
+}
+/* ===== MEDICINE CARD ===== */
+.medicine-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #e5e7eb;
+    position: relative;
+}
+
+.medicine-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 60px rgba(52, 152, 219, 0.12);
+    border-color: #3498db;
+}
+
+/* ===== BADGES ===== */
+.card-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.card-badge .discount-badge {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: white;
+    padding: 3px 14px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    animation: pulseBadge 2s infinite;
+}
+
+@keyframes pulseBadge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.card-badge .new-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 3px 14px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.card-badge .prescription-badge {
+    background: #fef3c7;
+    color: #d97706;
+    padding: 3px 14px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* ===== IMAGE WRAPPER ===== */
+.card-img-wrapper {
+    height: 200px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-img-wrapper img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    transition: transform 0.5s ease;
+}
+
+.medicine-card:hover .card-img-wrapper img {
+    transform: scale(1.08);
+}
+
+.card-img-wrapper .placeholder-icon {
+    font-size: 4.5rem;
+    opacity: 0.2;
+}
+
+/* ===== QUICK ACTIONS ===== */
+.quick-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.medicine-card:hover .quick-actions {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.quick-actions .btn-view,
+.quick-actions .wishlist-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0f172a;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.quick-actions .btn-view:hover {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+    transform: scale(1.1);
+}
+
+.quick-actions .wishlist-btn {
+    background: white;
+    color: #94a3b8;
+}
+
+.quick-actions .wishlist-btn:hover {
+    background: #fef2f2;
+    color: #ef4444;
+    border-color: #ef4444;
+    transform: scale(1.1);
+}
+
+.quick-actions .wishlist-btn.active {
+    background: #fef2f2;
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.quick-actions .wishlist-btn.active i {
+    color: #ef4444;
+}
+
+/* ===== CARD BODY ===== */
+.card-body {
+    padding: 18px 20px 20px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.card-header .category-tag {
+    font-size: 0.7rem;
+    background: #eef2ff;
+    color: #2563eb;
+    padding: 2px 14px;
+    border-radius: 50px;
+    font-weight: 600;
+}
+
+.card-header .rating {
+    font-size: 0.8rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.card-header .rating .review-count {
+    color: #94a3b8;
+    font-size: 0.7rem;
+}
+
+.medicine-name {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 2px;
+    color: #0f172a;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.generic-name {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ===== PRICE SECTION ===== */
+.price-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.price-wrapper .current-price {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #16a34a;
+}
+
+.price-wrapper .mrp {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    text-decoration: line-through;
+    margin-left: 6px;
+}
+
+.stock-badge {
+    font-size: 0.7rem;
+    padding: 3px 12px;
+    border-radius: 50px;
+    font-weight: 600;
+}
+
+.stock-badge.in-stock {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.stock-badge.low-stock {
+    background: #fef3c7;
+    color: #d97706;
+    animation: pulse 1.5s infinite;
+}
+
+.stock-badge.out-of-stock {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ===== ACTION BUTTONS ===== */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.action-buttons .add-to-cart-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.quantity-selector .qty-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.quantity-selector .qty-btn:hover {
+    background: #3498db;
+    color: white;
+}
+
+.quantity-selector .qty-input {
+    width: 40px;
+    height: 32px;
+    border: none;
+    text-align: center;
+    font-weight: 600;
+    background: transparent;
+    outline: none;
+}
+
+.btn-add-cart {
+    width: 100%;
+    border-radius: 10px;
+    padding: 9px;
+    font-weight: 700;
+    font-size: 13px;
+    background: linear-gradient(135deg, #3498db, #2563eb);
+    border: none;
+    color: white;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-add-cart:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.35);
+    color: white;
+}
+
+.btn-add-cart:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-buy-now {
+    flex: 0.6;
+    border-radius: 10px;
+    padding: 9px;
+    font-weight: 700;
+    font-size: 13px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: none;
+    color: white;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.btn-buy-now:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 5px 20px rgba(245, 158, 11, 0.35);
+    color: white;
+}
+
+.btn-buy-now:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .card-img-wrapper {
+        height: 160px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-buy-now {
+        flex: 1;
+    }
+    
+    .quick-actions {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 576px) {
+    .card-img-wrapper {
+        height: 140px;
+    }
+    
+    .card-body {
+        padding: 14px 16px 16px;
+    }
+    
+    .medicine-name {
+        font-size: 14px;
+    }
+    
+    .price-wrapper .current-price {
+        font-size: 1rem;
+    }
+    
+    .btn-add-cart,
+    .btn-buy-now {
+        font-size: 12px;
+        padding: 8px;
+    }
+}

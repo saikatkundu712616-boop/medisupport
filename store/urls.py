@@ -17,7 +17,7 @@ urlpatterns = [
     # Medicines
     path('medicines/', views.medicine_list, name='medicines'),
     path('medicine/<int:pk>/', views.medicine_detail, name='medicine_detail'),
-    path('category/<str:slug>/', views.category_products, name='category_products'),
+
     path('brand/<str:brand>/', views.brand_products, name='brand_products'),
 
     
@@ -47,6 +47,7 @@ urlpatterns = [
     
     # Category URLs
     path('categories/', views.category_list, name='category_list'),
+    path('category/<int:category_id>/', views.category_details, name='category_details'),
     path('categories/create/', views.category_create, name='category_create'),
     path('categories/<int:pk>/update/', views.category_update, name='category_update'),
     path('categories/<int:pk>/delete/', views.category_delete, name='category_delete'),
@@ -78,14 +79,29 @@ urlpatterns = [
     path('order/<int:order_id>/invoice/', views.admin_order_invoice, name='admin_order_invoice'),
     path('orders/export/', views.admin_order_export, name='admin_order_export'),
     path('orders/bulk-action/', views.admin_bulk_order_action, name='admin_bulk_order_action'),
+    path('checkout/', views.checkout, name='checkout'),
+    path('place-order/', views.place_order, name='place_order'),
+       # ===== CHECKOUT & ORDERS =====
+    path('checkout/', views.checkout, name='checkout'),
+    path('place-order/', views.place_order, name='place_order'),
+    path('my-orders/', views.my_orders, name='my_orders'),
+    path('order/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('order/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
+    path('buy-now/<int:medicine_id>/', views.buy_now, name='buy_now'),
 
+    # ===== ADDRESS URLS (✅ ADD THESE) =====
+    path('addresses/', views.address_list, name='address_list'),
+    path('addresses/create/', views.address_create, name='address_create'),
+    path('addresses/<int:pk>/update/', views.address_update, name='address_update'),
+    path('addresses/<int:pk>/delete/', views.address_delete, name='address_delete'),
+    path('addresses/<int:pk>/set-default/', views.address_set_default, name='address_set_default'),
     # #aidoctor
     # path('ai-doctor/', views.ai_doctor, name='ai_doctor'),
     # path('symptom-checker/', views.symptom_checker, name='symptom_checker'),
     # path('lab-packages/', views.lab_packages, name='lab_packages'),
     # path('wellness/', views.wellness, name='wellness'),
     # path('health-insurance/', views.health_insurance, name='health_insurance'),
-
+    path('category/<str:category_name>/', views.category_count, name='category_count'),
     # API URLs
     path('api/get-medicine-details/', views.get_medicine_details, name='get_medicine_details'),
 ]

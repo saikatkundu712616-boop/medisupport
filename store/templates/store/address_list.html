@@ -1,0 +1,131 @@
+{% extends 'store/header.html' %}
+
+{% block title %}My Addresses | MediStore{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- ===== HEADER WITH BACK BUTTON ===== -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h4 class="fw-bold mb-0">
+                <i class="fas fa-map-marker-alt"></i> My Addresses
+            </h4>
+            <small class="text-muted">Manage your delivery addresses</small>
+        </div>
+
+        <div class="d-flex gap-2">
+            <!-- ✅ Back to Checkout -->
+            <a href="{% url 'store:checkout' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="fas fa-arrow-left"></i> Back to Checkout
+            </a>
+
+            <!-- Add New Address -->
+            <a href="{% url 'store:address_create' %}?next=checkout" class="btn btn-primary rounded-pill px-4">
+                <i class="fas fa-plus"></i> Add New
+            </a>
+        </div>
+    </div>
+
+    {% if addresses %}
+        <div class="row g-3">
+            {% for address in addresses %}
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 {% if address.is_default %}border-success border-2{% endif %}">
+                        <div class="card-body">
+
+                            <!-- Address Info -->
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1">
+                                        {{ address.name }}
+                                        {% if address.is_default %}
+                                            <span class="badge bg-success">Default</span>
+                                        {% endif %}
+                                        {% if address.is_billing %}
+                                            <span class="badge bg-info">Billing</span>
+                                        {% endif %}
+                                    </h6>
+                                    <p class="text-muted mb-1 small">
+                                        <i class="fas fa-phone-alt"></i> {{ address.phone }}
+                                    </p>
+                                    {% if address.email %}
+                                        <p class="text-muted mb-1 small">
+                                            <i class="fas fa-envelope"></i> {{ address.email }}
+                                        </p>
+                                    {% endif %}
+                                    <p class="mb-0 small">
+                                        <i class="fas fa-map-pin text-primary"></i>
+                                        {{ address.get_full_address }}
+                                    </p>
+                                </div>
+
+                                <!-- Address Type Icon -->
+                                <div class="text-primary ms-2">
+                                    {% if address.address_type == 'HOM' %}
+                                        <i class="fas fa-home fa-lg"></i>
+                                    {% elif address.address_type == 'WRK' %}
+                                        <i class="fas fa-briefcase fa-lg"></i>
+                                    {% else %}
+                                        <i class="fas fa-map-marker-alt fa-lg"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="mt-3 d-flex gap-2 flex-wrap">
+                                <a href="{% url 'store:address_update' address.id %}?next=checkout"
+                                   class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+
+                                <a href="{% url 'store:address_delete' address.id %}"
+                                   class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+
+                                {% if not address.is_default %}
+                                    <a href="{% url 'store:address_set_default' address.id %}"
+                                       class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-check-circle"></i> Set Default
+                                    </a>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- ===== BOTTOM BACK BUTTON ===== -->
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+            <a href="{% url 'store:checkout' %}" class="btn btn-primary rounded-pill px-5">
+                <i class="fas fa-arrow-left"></i> Back to Checkout
+            </a>
+            <a href="{% url 'store:medicines' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="fas fa-shopping-bag"></i> Continue Shopping
+            </a>
+        </div>
+
+    {% else %}
+        <!-- ===== EMPTY STATE ===== -->
+        <div class="text-center py-5">
+            <i class="fas fa-map-marked-alt" style="font-size: 4rem; color: #cbd5e1;"></i>
+            <h5 class="mt-3">No Addresses Found</h5>
+            <p class="text-muted">Add your first address to proceed with checkout.</p>
+
+            <div class="d-flex gap-2 justify-content-center flex-wrap">
+                <a href="{% url 'store:address_create' %}?next=checkout"
+                   class="btn btn-primary rounded-pill px-4">
+                    <i class="fas fa-plus"></i> Add Address
+                </a>
+                <a href="{% url 'store:checkout' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="fas fa-arrow-left"></i> Back to Checkout
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

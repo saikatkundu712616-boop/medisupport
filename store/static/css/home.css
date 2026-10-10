@@ -527,7 +527,46 @@
         transform: scale(1.02);
         box-shadow: 0 5px 20px rgba(6, 182, 212, 0.3);
     }
+    .medicine-card .card-body .btn-buy-now {
+    width: 100%;
+    border-radius: 12px;
+    padding: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: none;
+    color: white;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.medicine-card .card-body .btn-buy-now:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 5px 20px rgba(245, 158, 11, 0.35);
+    color: white;
+}
+
+.medicine-card .card-body .btn-buy-now:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 576px) {
+    .medicine-card .card-body .d-flex.gap-2 {
+        flex-direction: column;
+    }
     
+    .medicine-card .card-body .btn-add-cart,
+    .medicine-card .card-body .btn-buy-now {
+        width: 100%;
+    }
+}
     /* ===== SECTION TITLES ===== */
     .section-header {
         display: flex;

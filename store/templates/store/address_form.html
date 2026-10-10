@@ -1,0 +1,148 @@
+{% extends 'store/header.html' %}
+
+{% block title %}{{ title }} | MediStore{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-4 rounded-bottom-0">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt"></i> {{ title }}</h5>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- ✅ SHOW ALL FORM ERRORS -->
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <h6 class="fw-bold mb-2">
+                                <i class="fas fa-exclamation-triangle"></i> Please fix the following errors:
+                            </h6>
+                            <ul class="mb-0">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>
+                                            <strong>{{ field|title }}:</strong> {{ error }}
+                                        </li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" id="addressForm" novalidate>
+                        {% csrf_token %}
+
+                        <!-- ✅ PRESERVE next PARAMETER -->
+                        <input type="hidden" name="next" value="{{ next|default:'' }}">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Full Name *</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Phone *</label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Alternate Phone</label>
+                                {{ form.alternate_phone }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Email</label>
+                                {{ form.email }}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Address Line 1 *</label>
+                                {{ form.address_line1 }}
+                                {% if form.address_line1.errors %}
+                                    <div class="text-danger small mt-1">{{ form.address_line1.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Address Line 2</label>
+                                {{ form.address_line2 }}
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Landmark</label>
+                                {{ form.landmark }}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">City *</label>
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                    <div class="text-danger small mt-1">{{ form.city.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">State *</label>
+                                {{ form.state }}
+                                {% if form.state.errors %}
+                                    <div class="text-danger small mt-1">{{ form.state.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Pincode *</label>
+                                {{ form.pincode }}
+                                {% if form.pincode.errors %}
+                                    <div class="text-danger small mt-1">{{ form.pincode.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Country</label>
+                                {{ form.country }}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Address Type</label>
+                                {{ form.address_type }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Label</label>
+                                {{ form.address_label }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_default }}
+                                    <label class="form-check-label">Set as Default Address</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_billing }}
+                                    <label class="form-check-label">Use as Billing Address</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                <i class="fas fa-save"></i> Save Address
+                            </button>
+                            <a href="{% url 'store:checkout' %}" class="btn btn-secondary rounded-pill px-4">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

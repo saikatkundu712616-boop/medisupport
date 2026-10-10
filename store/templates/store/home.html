@@ -1,8 +1,9 @@
 {% extends 'Store/header.html' %}
 {% load static %}
-{% block title %}MediStore | Smart Digital Pharmacy{% endblock %}
+{% block title %}MediSupport | Smart Digital Pharmacy{% endblock %}
 
 {% block extra_css %}
+   <link rel="stylesheet" href="{% static 'css/new.css' %}">
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock %}
  {% block slider %}{% include "store/slider.html" %} {% endblock %}
@@ -117,32 +118,32 @@
     </div>
     
     <div class="category-grid">
-        <a href="{% url 'store:category_products' 'antibiotics' %}" class="category-card">
+        <a href="{% url 'store:category_count' 'antibiotics' %}" class="category-card">
             <div class="icon">💊</div>
             <h6>Antibiotics</h6>
             <small>120+ Products</small>
         </a>
-        <a href="{% url 'store:category_products' 'pain-relief' %}" class="category-card">
+        <a href="{% url 'store:category_count' 'pain-relief' %}" class="category-card">
             <div class="icon">💪</div>
             <h6>Pain Relief</h6>
             <small>85+ Products</small>
         </a>
-        <a href="{% url 'store:category_products' 'vitamins' %}" class="category-card">
+        <a href="{% url 'store:category_count' 'vitamins' %}" class="category-card">
             <div class="icon">🧬</div>
             <h6>Vitamins</h6>
             <small>65+ Products</small>
         </a>
-        <a href="{% url 'store:category_products' 'diabetes' %}" class="category-card">
+        <a href="{% url 'store:category_count' 'diabetes' %}" class="category-card">
             <div class="icon">🩸</div>
             <h6>Diabetes Care</h6>
             <small>45+ Products</small>
         </a>
-        <a href="{% url 'store:category_products' 'cardiac' %}" class="category-card">
+        <a href="{% url 'store:category_count' 'cardiac' %}" class="category-card">
             <div class="icon">❤️</div>
             <h6>Cardiac Care</h6>
             <small>38+ Products</small>
         </a>
-        <a href="{% url 'store:category_products' 'cold-flu' %}" class="category-card">
+        <a href="{% url 'store:category_count' 'cold-flu' %}" class="category-card">
             <div class="icon">🤧</div>
             <h6>Cold & Flu</h6>
             <small>52+ Products</small>
@@ -158,31 +159,33 @@
     </div>
     
     <div class="medicine-grid">
-        {% for medicine in featured_medicines %}
-            <div class="medicine-card">
-                <div class="card-img">
-                    {% if medicine.image %}
-                        <img src="{{ medicine.image.url }}" alt="{{ medicine.name }}">
-                    {% else %}
-                        <div class="placeholder">💊</div>
-                    {% endif %}
-                </div>
-                <div class="card-body">
-                    <span class="category-tag">{{ medicine.category.name }}</span>
-                    <h5>{{ medicine.name }}</h5>
-                    <p style="font-size: 0.85rem; color: #64748b;">{{ medicine.generic_name|default:'' }}</p>
-                    
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div>
-                            <span class="price">₹{{ medicine.selling_price }}</span>
-                            <span class="mrp">₹{{ medicine.mrp }}</span>
-                        </div>
-                        <span class="stock-badge {% if medicine.quantity > 10 %}bg-success{% elif medicine.quantity > 0 %}bg-warning{% else %}bg-danger{% endif %} text-white">
-                            {% if medicine.quantity > 10 %}In Stock{% elif medicine.quantity > 0 %}Low Stock{% else %}Out of Stock{% endif %}
-                        </span>
+    {% for medicine in featured_medicines %}
+        <div class="medicine-card" onclick="window.location.href='{% url 'store:medicine_detail' medicine.id %}'" style="cursor: pointer;">
+            <div class="card-img">
+                {% if medicine.image %}
+                    <img src="{{ medicine.image.url }}" alt="{{ medicine.name }}">
+                {% else %}
+                    <div class="placeholder">💊</div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <span class="category-tag">{{ medicine.category.name }}</span>
+                <h5>{{ medicine.name }}</h5>
+                <p style="font-size: 0.85rem; color: #64748b;">{{ medicine.generic_name|default:'' }}</p>
+                
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div>
+                        <span class="price">₹{{ medicine.selling_price }}</span>
+                        <span class="mrp">₹{{ medicine.mrp }}</span>
                     </div>
-                    
-                    <form method="post" action="{% url 'store:add_to_cart' medicine.id %}">
+                    <span class="stock-badge {% if medicine.quantity > 10 %}bg-success{% elif medicine.quantity > 0 %}bg-warning{% else %}bg-danger{% endif %} text-white">
+                        {% if medicine.quantity > 10 %}In Stock{% elif medicine.quantity > 0 %}Low Stock{% else %}Out of Stock{% endif %}
+                    </span>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <!-- Add to Cart Button -->
+                    <form method="post" action="{% url 'store:add_to_cart' medicine.id %}" style="flex: 1;" onclick="event.stopPropagation();">
                         {% csrf_token %}
                         <input type="hidden" name="quantity" value="1">
                         <button type="submit" class="btn-add-cart" {% if medicine.quantity == 0 %}disabled{% endif %}>
@@ -190,8 +193,19 @@
                             {% if medicine.quantity == 0 %}Out of Stock{% else %}Add to Cart{% endif %}
                         </button>
                     </form>
+                    
+                    <!-- Buy Now Button -->
+                    <form method="post" action="{% url 'store:add_to_cart' medicine.id %}" style="flex: 1;" onclick="event.stopPropagation();">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn-buy-now" {% if medicine.quantity == 0 %}disabled{% endif %}>
+                            <i class="fas fa-bolt"></i> Buy Now
+                        </button>
+                    </form>
                 </div>
             </div>
+        </div>
+   
         {% empty %}
             <div class="col-12 text-center py-5">
                 <i class="fas fa-capsules" style="font-size: 3rem; color: #ccc;"></i>
@@ -257,7 +271,7 @@
 <!-- ===== WHY CHOOSE US ===== -->
 <div class="container mt-5 mb-5">
     <div class="section-header">
-        <h2>Why Choose MediStore?</h2>
+        <h2>Why Choose MediSupport?</h2>
     </div>
     
     <div class="row g-4">
@@ -284,9 +298,9 @@
         </div>
         <div class="col-md-3">
             <div class="text-center p-4 bg-white rounded-4 shadow-sm border" style="border-color: #e5e7eb !important; height: 100%;">
-                <div style="font-size: 3rem;">📞</div>
-                <h6 class="mt-3 fw-bold">24/7 Support</h6>
-                <p class="text-muted small">Expert healthcare assistance anytime</p>
+                <div style="font-size: 3rem;">🧑‍⚕️</div>
+                <h6 class="mt-3 fw-bold">24/7 AI Doctor Support</h6>
+                <p class="text-muted small">Expert healthcare assistance anytime, anywhere</p>
             </div>
         </div>
     </div>

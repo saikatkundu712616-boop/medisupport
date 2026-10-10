@@ -1,0 +1,288 @@
+{% extends 'store/header.html' %}
+{% load static %}
+
+{% block title %}Search Results for "{{ query }}" | MediStore{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-header {
+        background: linear-gradient(135deg, #f8fafc, #eef2ff);
+        padding: 40px 0;
+        border-radius: 0 0 30px 30px;
+        margin-bottom: 40px;
+    }
+    
+    .search-header h2 {
+        font-weight: 800;
+        color: #0f172a;
+    }
+    
+    .search-header .search-query {
+        color: #3498db;
+    }
+    
+    .search-stats {
+        color: #64748b;
+        font-weight: 500;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .no-results i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 20px;
+    }
+    
+    .no-results h4 {
+        color: #0f172a;
+        font-weight: 700;
+    }
+    
+    .no-results p {
+        color: #64748b;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .search-tips {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 20px;
+        margin-top: 20px;
+        text-align: left;
+    }
+    
+    .search-tips h6 {
+        font-weight: 700;
+        color: #0f172a;
+    }
+    
+    .search-tips ul {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0;
+    }
+    
+    .search-tips ul li {
+        padding: 5px 0;
+        color: #475569;
+    }
+    
+    .search-tips ul li i {
+        color: #3498db;
+        margin-right: 8px;
+        font-size: 14px;
+    }
+    
+    .medicine-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 25px;
+        margin: 30px 0;
+    }
+    
+    .medicine-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        transition: all 0.3s;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .medicine-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    }
+    
+    .medicine-card .card-img {
+        height: 180px;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .medicine-card .card-img img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+    }
+    
+    .medicine-card .card-img .placeholder {
+        font-size: 4rem;
+        opacity: 0.3;
+    }
+    
+    .medicine-card .card-body {
+        padding: 20px;
+    }
+    
+    .medicine-card .card-body h5 {
+        font-weight: 700;
+        margin-bottom: 5px;
+        font-size: 16px;
+    }
+    
+    .medicine-card .card-body .category-tag {
+        font-size: 0.75rem;
+        background: #eef2ff;
+        color: #2563eb;
+        padding: 2px 12px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+    
+    .medicine-card .card-body .price {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #16a34a;
+    }
+    
+    .medicine-card .card-body .mrp {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        text-decoration: line-through;
+        margin-left: 8px;
+    }
+    
+    .medicine-card .card-body .stock-badge {
+        font-size: 0.7rem;
+        padding: 2px 10px;
+        border-radius: 20px;
+    }
+    
+    .medicine-card .card-body .btn-add-cart {
+        width: 100%;
+        border-radius: 12px;
+        padding: 8px;
+        font-weight: 700;
+        font-size: 13px;
+        background: linear-gradient(135deg, #06b6d4, #2563eb);
+        border: none;
+        color: white;
+        transition: all 0.3s;
+    }
+    
+    .medicine-card .card-body .btn-add-cart:hover {
+        transform: scale(1.02);
+        box-shadow: 0 5px 20px rgba(6, 182, 212, 0.3);
+    }
+    
+    .medicine-card .card-body .btn-add-cart:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    @media (max-width: 768px) {
+        .medicine-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Search Header -->
+<div class="search-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2>Search Results for <span class="search-query">"{{ query }}"</span></h2>
+                <p class="search-stats">
+                    <i class="fas fa-capsules me-2"></i>
+                    {{ total_results }} medicine{{ total_results|pluralize }} found
+                </p>
+            </div>
+            <div class="col-lg-4">
+                <form class="hero-search" method="get" action="{% url 'store:search_medicines' %}">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" 
+                               placeholder="Search again..." value="{{ query }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    {% if medicines %}
+        <!-- Results Grid -->
+        <div class="medicine-grid">
+            {% for medicine in medicines %}
+                <div class="medicine-card">
+                    <div class="card-img">
+                        {% if medicine.image %}
+                            <img src="{{ medicine.image.url }}" alt="{{ medicine.name }}">
+                        {% else %}
+                            <div class="placeholder">💊</div>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <span class="category-tag">{{ medicine.category.name }}</span>
+                        <h5>{{ medicine.name }}</h5>
+                        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px;">
+                            {{ medicine.generic_name|default:'' }}
+                        </p>
+                        
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div>
+                                <span class="price">₹{{ medicine.selling_price }}</span>
+                                <span class="mrp">₹{{ medicine.mrp }}</span>
+                            </div>
+                            <span class="stock-badge {% if medicine.quantity > 10 %}bg-success{% elif medicine.quantity > 0 %}bg-warning{% else %}bg-danger{% endif %} text-white">
+                                {% if medicine.quantity > 10 %}In Stock{% elif medicine.quantity > 0 %}Low Stock{% else %}Out of Stock{% endif %}
+                            </span>
+                        </div>
+                        
+                        <form method="post" action="{% url 'store:add_to_cart' medicine.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn-add-cart" {% if medicine.quantity == 0 %}disabled{% endif %}>
+                                <i class="fas fa-shopping-cart"></i> 
+                                {% if medicine.quantity == 0 %}Out of Stock{% else %}Add to Cart{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- No Results -->
+        <div class="no-results">
+            <i class="fas fa-search"></i>
+            <h4>No Medicines Found</h4>
+            <p>We couldn't find any medicines matching <strong>"{{ query }}"</strong>.</p>
+            
+            <div class="search-tips">
+                <h6><i class="fas fa-lightbulb text-warning"></i> Search Tips:</h6>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Try using generic names instead of brand names</li>
+                    <li><i class="fas fa-check-circle"></i> Check for spelling mistakes</li>
+                    <li><i class="fas fa-check-circle"></i> Use fewer words for broader results</li>
+                    <li><i class="fas fa-check-circle"></i> Try searching by category (e.g., "antibiotics", "pain relief")</li>
+                </ul>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{% url 'store:medicines' %}" class="btn btn-primary rounded-pill px-4">
+                    <i class="fas fa-th-list"></i> Browse All Medicines
+                </a>
+                <a href="{% url 'store:home' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="fas fa-home"></i> Go Home
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

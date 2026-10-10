@@ -1,0 +1,670 @@
+{% extends 'store/header.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - MediStore{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== HERO BANNER ===== */
+    .category-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0e7490 100%);
+        padding: 50px 0 40px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 40px;
+        border-radius: 0 0 30px 30px;
+    }
+    
+    .category-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(52, 152, 219, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    
+    .category-hero::after {
+        content: '💊';
+        position: absolute;
+        right: 8%;
+        bottom: 10%;
+        font-size: 100px;
+        opacity: 0.06;
+        animation: floatIcon 6s ease-in-out infinite;
+    }
+    
+    @keyframes floatIcon {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(5deg); }
+    }
+    
+    .category-hero-content {
+        position: relative;
+        z-index: 1;
+        color: white;
+    }
+    
+    .category-hero-content .breadcrumb {
+        background: none;
+        padding: 0;
+        margin: 0 0 15px;
+    }
+    
+    .category-hero-content .breadcrumb-item a {
+        color: rgba(255,255,255,0.7);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+    
+    .category-hero-content .breadcrumb-item a:hover {
+        color: #3498db;
+    }
+    
+    .category-hero-content .breadcrumb-item.active {
+        color: white;
+        font-weight: 600;
+    }
+    
+    .category-hero-content .breadcrumb-item+.breadcrumb-item::before {
+        color: rgba(255,255,255,0.4);
+    }
+    
+    .category-hero-content h1 {
+        font-size: 2.8rem;
+        font-weight: 900;
+        margin-bottom: 8px;
+    }
+    
+    .category-hero-content h1 i {
+        color: #3498db;
+        margin-right: 12px;
+    }
+    
+    .category-hero-content .subtitle {
+        font-size: 1.1rem;
+        opacity: 0.8;
+        margin-bottom: 15px;
+    }
+    
+    .category-stats {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .category-stats .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.08);
+        padding: 8px 20px;
+        border-radius: 50px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    
+    .category-stats .stat-item i {
+        color: #3498db;
+        font-size: 18px;
+    }
+    
+    .category-stats .stat-item span {
+        font-weight: 600;
+    }
+    
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+        background: white;
+        border-radius: 16px;
+        padding: 15px 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+        border: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .filter-bar .result-count {
+        font-weight: 600;
+        color: #0f172a;
+    }
+    
+    .filter-bar .result-count span {
+        color: #3498db;
+    }
+    
+    .filter-bar .sort-options {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .filter-bar .sort-options label {
+        font-size: 14px;
+        color: #64748b;
+        font-weight: 500;
+        margin: 0;
+    }
+    
+    .filter-bar .sort-options select {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 8px 15px;
+        font-size: 14px;
+        background: white;
+        color: #0f172a;
+        font-weight: 500;
+        outline: none;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .filter-bar .sort-options select:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    
+    /* ===== MEDICINE GRID ===== */
+    .medicine-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 30px;
+        margin: 30px 0;
+    }
+    
+    .medicine-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #e5e7eb;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .medicine-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(52, 152, 219, 0.12);
+        border-color: rgba(52, 152, 219, 0.2);
+    }
+    
+    .medicine-card .card-img {
+        height: 200px;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .medicine-card .card-img img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        transition: transform 0.4s ease;
+    }
+    
+    .medicine-card:hover .card-img img {
+        transform: scale(1.05);
+    }
+    
+    .medicine-card .card-img .placeholder {
+        font-size: 4rem;
+        opacity: 0.2;
+    }
+    
+    .medicine-card .card-img .discount-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
+        color: white;
+        padding: 3px 12px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 700;
+        z-index: 2;
+    }
+    
+    .medicine-card .card-body {
+        padding: 18px 20px 20px;
+    }
+    
+    .medicine-card .card-body .category-tag {
+        display: inline-block;
+        font-size: 0.7rem;
+        background: #eef2ff;
+        color: #2563eb;
+        padding: 2px 12px;
+        border-radius: 20px;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+    
+    .medicine-card .card-body h5 {
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 4px;
+        color: #0f172a;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .medicine-card .card-body .generic-name {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 10px;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .medicine-card .card-body .price {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #16a34a;
+    }
+    
+    .medicine-card .card-body .mrp {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        text-decoration: line-through;
+        margin-left: 6px;
+    }
+    
+    .medicine-card .card-body .stock-badge {
+        font-size: 0.7rem;
+        padding: 3px 12px;
+        border-radius: 50px;
+        font-weight: 600;
+    }
+    
+    .medicine-card .card-body .stock-badge.in-stock {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+    
+    .medicine-card .card-body .stock-badge.low-stock {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .medicine-card .card-body .stock-badge.out-stock {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+    
+    /* ===== BUTTONS ===== */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+    }
+    
+    .btn-add-cart {
+        flex: 1;
+        border-radius: 12px;
+        padding: 10px;
+        font-weight: 700;
+        font-size: 13px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        border: none;
+        color: white;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    
+    .btn-add-cart:hover:not(:disabled) {
+        transform: scale(1.02);
+        box-shadow: 0 5px 20px rgba(52, 152, 219, 0.35);
+        color: white;
+    }
+    
+    .btn-add-cart:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    .btn-add-cart.out-of-stock {
+        background: #94a3b8;
+    }
+    
+    .btn-buy-now {
+        flex: 0.6;
+        border-radius: 12px;
+        padding: 10px;
+        font-weight: 700;
+        font-size: 13px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border: none;
+        color: white;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+    
+    .btn-buy-now:hover:not(:disabled) {
+        transform: scale(1.02);
+        box-shadow: 0 5px 20px rgba(245, 158, 11, 0.35);
+        color: white;
+    }
+    
+    .btn-buy-now:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* ===== NO RESULTS ===== */
+    .no-medicines {
+        text-align: center;
+        padding: 60px 20px;
+    }
+    
+    .no-medicines i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 20px;
+    }
+    
+    .no-medicines h4 {
+        color: #0f172a;
+        font-weight: 700;
+    }
+    
+    .no-medicines p {
+        color: #64748b;
+    }
+    
+    .no-medicines .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 30px;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .no-medicines .btn-back:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(52, 152, 219, 0.3);
+        color: white;
+    }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 992px) {
+        .category-hero-content h1 {
+            font-size: 2rem;
+        }
+        
+        .medicine-grid {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .category-hero {
+            padding: 30px 0 25px;
+        }
+        
+        .category-hero-content h1 {
+            font-size: 1.6rem;
+        }
+        
+        .category-stats {
+            gap: 10px;
+        }
+        
+        .category-stats .stat-item {
+            padding: 6px 14px;
+            font-size: 13px;
+        }
+        
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+        
+        .filter-bar .sort-options {
+            flex-wrap: wrap;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-buy-now {
+            flex: 1;
+        }
+        
+        .medicine-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .medicine-card .card-img {
+            height: 160px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .medicine-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .medicine-card .card-img {
+            height: 140px;
+        }
+        
+        .medicine-card .card-body {
+            padding: 14px 16px 16px;
+        }
+        
+        .medicine-card .card-body h5 {
+            font-size: 14px;
+        }
+        
+        .medicine-card .card-body .price {
+            font-size: 1rem;
+        }
+        
+        .btn-add-cart,
+        .btn-buy-now {
+            font-size: 11px;
+            padding: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ===== HERO BANNER ===== -->
+<section class="category-hero">
+    <div class="container">
+        <div class="category-hero-content">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'store:home' %}"><i class="fas fa-home"></i> Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'store:category_list' %}">Categories</a></li>
+                    <li class="breadcrumb-item active">{{ category.name }}</li>
+                </ol>
+            </nav>
+            
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1><i class="fas fa-tag"></i> {{ category.name }}</h1>
+                    {% if category.description %}
+                        <p class="subtitle">{{ category.description }}</p>
+                    {% else %}
+                        <p class="subtitle">Browse our collection of {{ category.name|lower }} medicines</p>
+                    {% endif %}
+                </div>
+                <div class="col-lg-4">
+                    <div class="category-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-capsules"></i>
+                            <span>{{ medicines.count }} Medicines</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+                            <span>In Stock</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FILTER BAR ===== -->
+<div class="container">
+    <div class="filter-bar">
+        <div class="result-count">
+            Showing <span>{{ medicines.count }}</span> products in <strong>{{ category.name }}</strong>
+        </div>
+        
+        <div class="sort-options">
+            <label for="sortSelect"><i class="fas fa-sort"></i> Sort by:</label>
+            <select id="sortSelect" onchange="window.location.href=this.value">
+                <option value="?sort=popular">Most Popular</option>
+                <option value="?sort=price_low">Price: Low to High</option>
+                <option value="?sort=price_high">Price: High to Low</option>
+                <option value="?sort=newest">Newest First</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MEDICINE GRID ===== -->
+<div class="container">
+    {% if medicines %}
+        <div class="medicine-grid">
+            {% for medicine in medicines %}
+                <div class="medicine-card" onclick="window.location.href='{% url 'store:medicine_detail' medicine.id %}'">
+                    <div class="card-img">
+                        {% if medicine.image %}
+                            <img src="{{ medicine.image.url }}" alt="{{ medicine.name }}" loading="lazy">
+                        {% else %}
+                            <div class="placeholder">💊</div>
+                        {% endif %}
+                        {% if medicine.discount_percentage > 0 %}
+                            <span class="discount-badge">{{ medicine.discount_percentage|floatformat:0 }}% OFF</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <span class="category-tag">{{ medicine.category.name }}</span>
+                        <h5>{{ medicine.name }}</h5>
+                        <p class="generic-name">{{ medicine.generic_name|default:'' }}</p>
+                        
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div>
+                                <span class="price">₹{{ medicine.selling_price }}</span>
+                                <span class="mrp">₹{{ medicine.mrp }}</span>
+                            </div>
+                            <span class="stock-badge {% if medicine.quantity > 10 %}in-stock{% elif medicine.quantity > 0 %}low-stock{% else %}out-stock{% endif %}">
+                                {% if medicine.quantity > 10 %}
+                                    <i class="fas fa-check-circle"></i> In Stock
+                                {% elif medicine.quantity > 0 %}
+                                    <i class="fas fa-exclamation-circle"></i> Low Stock
+                                {% else %}
+                                    <i class="fas fa-times-circle"></i> Out of Stock
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="action-buttons" onclick="event.stopPropagation();">
+                            <form method="post" action="{% url 'store:add_to_cart' medicine.id %}" style="flex: 1;">
+                                {% csrf_token %}
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn-add-cart {% if medicine.quantity == 0 %}out-of-stock{% endif %}" 
+                                        {% if medicine.quantity == 0 %}disabled{% endif %}>
+                                    <i class="fas fa-shopping-cart"></i> 
+                                    {% if medicine.quantity == 0 %}Out of Stock{% else %}Add to Cart{% endif %}
+                                </button>
+                            </form>
+                            
+                            <form method="post" action="{% url 'store:buy_now' medicine.id %}" style="flex: 0.6;">
+                                {% csrf_token %}
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn-buy-now" {% if medicine.quantity == 0 %}disabled{% endif %}>
+                                    <i class="fas fa-bolt"></i> Buy Now
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-medicines">
+            <i class="fas fa-capsules"></i>
+            <h4>No Medicines in this Category</h4>
+            <p>Check back later for new additions in {{ category.name }}.</p>
+            <a href="{% url 'store:category_list' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Back to Categories
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- ===== FOOTER SPACER ===== -->
+<div style="height: 40px;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Sort functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const sortSelect = document.getElementById('sortSelect');
+        if (sortSelect) {
+            // Get current sort from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentSort = urlParams.get('sort') || 'popular';
+            
+            // Set selected option
+            for (let option of sortSelect.options) {
+                if (option.value === currentSort) {
+                    option.selected = true;
+                    break;
+                }
+            }
+            
+            // Handle change
+            sortSelect.addEventListener('change', function() {
+                const url = new URL(window.location.href);
+                url.searchParams.set('sort', this.value);
+                window.location.href = url.toString();
+            });
+        }
+    });
+</script>
+{% endblock %}

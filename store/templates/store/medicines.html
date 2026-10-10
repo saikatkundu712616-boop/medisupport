@@ -3,6 +3,7 @@
 {% block title %}Medicines | Medisupport{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/new.css' %}">
 <link rel="stylesheet" href="{% static 'css/medicines.css' %}">
 {% endblock %}
 
@@ -75,33 +76,46 @@
           {% if medicines %}
     <div class="medicine-grid">
         {% for medicine in medicines %}
-            <div class="medicine-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:'50' }}">
+            <div class="medicine-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:'50' }}" onclick="window.location.href='{% url 'store:medicine_detail' medicine.id %}'" style="cursor: pointer;">
+                
+                <!-- Badges -->
                 <div class="card-badge">
-                    {% if medicine.get_discount_percent > 0 %}
-                        <span class="discount-badge">{{ medicine.get_discount_percent }}% OFF</span>
+                    {% if medicine.discount_percentage > 0 %}
+                        <span class="discount-badge">{{ medicine.discount_percentage|floatformat:0 }}% OFF</span>
                     {% endif %}
                     {% if medicine.is_new %}
                         <span class="new-badge">NEW</span>
                     {% endif %}
+                    {% if medicine.prescription_required %}
+                        <span class="prescription-badge">📋 Rx</span>
+                    {% endif %}
                 </div>
                 
+                <!-- Image -->
                 <div class="card-img-wrapper">
                     {% if medicine.image %}
                         <img src="{{ medicine.image.url }}" alt="{{ medicine.name }}" loading="lazy">
                     {% else %}
                         <div class="placeholder-icon">💊</div>
                     {% endif %}
-                    <div class="quick-actions">
-                        <button class="quick-view-btn" data-id="{{ medicine.id }}" title="Quick View">
+                    
+                    <!-- Quick Actions -->
+                    <div class="quick-actions" onclick="event.stopPropagation();">
+                        <a href="{% url 'store:medicine_detail' medicine.id %}" class="btn-view" title="View Details">
                             <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="wishlist-btn" data-id="{{ medicine.id }}" title="Add to Wishlist">
-                            <i class="far fa-heart"></i>
+                        </a>
+                        
+                        <!-- Wishlist Button with AJAX -->
+                        <button type="button" class="wishlist-btn {% if medicine.id in wishlist_ids %}active{% endif %}" 
+                                onclick="toggleWishlist(this, {{ medicine.id }})" 
+                                title="{% if medicine.id in wishlist_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
+                            <i class="{% if medicine.id in wishlist_ids %}fas{% else %}far{% endif %} fa-heart"></i>
                         </button>
                     </div>
                 </div>
                 
-                <div class="card-body">
+                <!-- Body -->
+                <div class="card-body" onclick="event.stopPropagation();">
                     <div class="card-header">
                         <span class="category-tag">{{ medicine.category.name }}</span>
                         <div class="rating">
@@ -116,6 +130,7 @@
                         <p class="generic-name">{{ medicine.generic_name }}</p>
                     {% endif %}
                     
+                    <!-- Price -->
                     <div class="price-section">
                         <div class="price-wrapper">
                             <span class="current-price">₹{{ medicine.selling_price }}</span>
@@ -134,26 +149,36 @@
                         </span>
                     </div>
                     
-                    <form method="post" action="{% url 'store:add_to_cart' medicine.id %}" class="add-to-cart-form">
-                        {% csrf_token %}
-                        <div class="quantity-selector">
-                            <button type="button" class="qty-btn minus-btn">−</button>
-                            <input type="number" name="quantity" value="1" min="1" max="{{ medicine.quantity }}" class="qty-input">
-                            <button type="button" class="qty-btn plus-btn">+</button>
-                        </div>
-                        <button type="submit" class="btn-add-cart" {% if medicine.quantity == 0 %}disabled{% endif %}>
-                            <i class="fas fa-shopping-cart"></i> 
-                            {% if medicine.quantity == 0 %}
-                                Out of Stock
-                            {% else %}
-                                Add to Cart
-                            {% endif %}
-                        </button>
-                    </form>
+                    <!-- Buttons -->
+                    <div class="action-buttons">
+                        <!-- Add to Cart -->
+                        <form method="post" action="{% url 'store:add_to_cart' medicine.id %}" class="add-to-cart-form" style="flex: 1;">
+                            {% csrf_token %}
+                          
+                            <button type="submit" class="btn-add-cart" {% if medicine.quantity == 0 %}disabled{% endif %}>
+                                <i class="fas fa-shopping-cart"></i> 
+                                {% if medicine.quantity == 0 %}
+                                    Out of Stock
+                                {% else %}
+                                    Add to Cart
+                                {% endif %}
+                            </button>
+                        </form>
+                        
+                        <!-- Buy Now -->
+                        <form method="post" action="{% url 'store:add_to_cart' medicine.id %}" style="flex: 0.6;" onsubmit="return confirm('Proceed to buy this medicine?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn-buy-now" {% if medicine.quantity == 0 %}disabled{% endif %}>
+                                <i class="fas fa-bolt"></i> Buy Now
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         {% endfor %}
     </div>
+
     
     <!-- Pagination -->
     {% if medicines.has_other_pages %}
@@ -227,4 +252,7 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/wishlist.js' %}"></script>
 {% endblock %}

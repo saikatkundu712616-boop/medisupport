@@ -19,7 +19,7 @@ from .models import *
 from .forms import (
     UserRegistrationForm, CategoryForm, 
     MedicineForm, CustomerForm,  SaleForm,
-    OrderCreateForm
+    OrderCreateForm, UserAddressForm,
 )
 def header(request):
     return render(request, 'Store/header.html')
@@ -68,29 +68,43 @@ def user_register(request):
     """User registration view"""
     if request.user.is_authenticated:
         return redirect('store:home')
-    
+
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
+
         if form.is_valid():
+            phone = request.POST.get('phone')
+
+            # Check phone before creating user
+            if Customer.objects.filter(phone=phone).exists():
+                messages.error(request, "Phone number already registered.")
+                return render(request, 'Store/register.html', {'form': form})
+
+            # Create user
             user = form.save()
-            
+
             # Create customer profile
             Customer.objects.create(
                 user=user,
                 name=f"{user.first_name} {user.last_name}",
                 email=user.email,
-                phone=request.POST.get('phone', '')
+                phone=phone
             )
-            
-            # Create cart for user
+
+            # Create cart
             Cart.objects.create(user=user)
-            
-            login(request, user)
-            messages.success(request, 'Registration successful! Welcome to MediSupport.')
+
+        
+
+            messages.success(
+                request,
+                "Registration successful! Please log in to continue."
+            )
             return redirect('store:login')
+
     else:
         form = UserRegistrationForm()
-    
+
     return render(request, 'Store/register.html', {'form': form})
 
 @login_required
@@ -258,18 +272,20 @@ def medicine_detail(request, pk):
         'in_wishlist': in_wishlist,
         'cart_count': cart_count,
     }
-    return render(request, 'medicine_detail.html', context)
+    return render(request, 'store/medicine_detail.html', context)
 
-def category_products(request, slug):
-    """View products by category"""
-    category = get_object_or_404(Category, slug=slug)
+def category_count(request, category_name):
+    """View products by category using category name"""
+    category = get_object_or_404(Category, name__iexact=category_name)
+    Category,
+    name__iexact=category_name.replace("-", " ")
     medicines = Medicine.objects.filter(category=category, is_active=True)
-    
+
     context = {
         'category': category,
         'medicines': medicines,
     }
-    return render(request, 'category_products.html', context)
+    return render(request, 'store/products.html', context)
 
 def brand_products(request, brand):
     """View products by brand"""
@@ -283,26 +299,49 @@ def brand_products(request, brand):
 
 def search_medicines(request):
     """Search medicines"""
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
+    
     if query:
+        # Search in multiple fields
         medicines = Medicine.objects.filter(
             Q(name__icontains=query) |
             Q(generic_name__icontains=query) |
-            Q(manufacturer__icontains=query),
+            Q(manufacturer__icontains=query) |
+            Q(category__name__icontains=query) |
+            Q(description__icontains=query),
             is_active=True
-        )
+        ).distinct()
+        
+        # If no results, try partial matching
+        if not medicines.exists():
+            # Split query into words and search individually
+            words = query.split()
+            for word in words:
+                medicines = medicines | Medicine.objects.filter(
+                    Q(name__icontains=word) |
+                    Q(generic_name__icontains=word) |
+                    Q(manufacturer__icontains=word),
+                    is_active=True
+                ).distinct()
     else:
-        medicines = Medicine.objects.none()
+        medicines = Medicine.objects.filter(is_active=True).order_by('-created_at')[:10]
+    
+    # Get categories for filter
+    categories = Category.objects.filter(
+        medicines__is_active=True
+    ).distinct()
     
     context = {
         'query': query,
         'medicines': medicines,
+        'categories': categories,
+        'total_results': medicines.count(),
     }
     return render(request, 'store/search_results.html', context)
 
 
 def category_list(request):
-    """List all categories"""
+   
     categories = Category.objects.annotate(
         medicine_count=Count('medicines', filter=Q(medicines__is_active=True))
     ).order_by('name')
@@ -311,45 +350,57 @@ def category_list(request):
         'categories': categories,
     }
     return render(request, 'Store/categories.html', context)
-
-# ==================== CART VIEWS ====================
+def category_details(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
+    medicines = Medicine.objects.filter(category=category, is_active=True)
+    
+    context = {
+        'category': category,
+        'medicines': medicines,
+    }
+    return render(request, 'store/category_products.html', context)
 
 @login_required
 def view_cart(request):
     """View shopping cart"""
+    # ✅ Use get_or_create to avoid crashes when cart doesn't exist
     cart, created = Cart.objects.get_or_create(user=request.user)
     cart_items = CartItem.objects.filter(cart=cart).select_related('medicine')
-    
-    total = sum(item.get_total() for item in cart_items)
+
+    total = sum(item.get_total() for item in cart_items) if cart_items.exists() else Decimal('0.00')
     item_count = cart_items.count()
-    
+
     context = {
         'cart_items': cart_items,
         'total': total,
         'item_count': item_count,
         'cart_count': item_count,
     }
-    return render(request, 'Store/cart.html', context)
+    # ✅ Fixed: lowercase 'store' — was 'Store'
+    return render(request, 'store/cart.html', context)
+
 
 @login_required
 def add_to_cart(request, medicine_id):
     """Add medicine to cart"""
     medicine = get_object_or_404(Medicine, pk=medicine_id, is_active=True)
-    
+
     if medicine.quantity <= 0:
         messages.error(request, f'Sorry, {medicine.name} is out of stock.')
-        return redirect('medicine_detail', pk=medicine_id)
-    
+        # ✅ Fixed: added 'store:' namespace
+        return redirect('store:medicine_detail', pk=medicine_id)
+
+    # ✅ Use get_or_create to avoid crashes
     cart, created = Cart.objects.get_or_create(user=request.user)
-    
+
     # Check if item already in cart
-    cart_item, created = CartItem.objects.get_or_create(
+    cart_item, item_created = CartItem.objects.get_or_create(
         cart=cart,
         medicine=medicine,
         defaults={'quantity': 1}
     )
-    
-    if not created:
+
+    if not item_created:
         if cart_item.quantity < medicine.quantity:
             cart_item.quantity += 1
             cart_item.save()
@@ -358,34 +409,61 @@ def add_to_cart(request, medicine_id):
             messages.warning(request, f'Only {medicine.quantity} items available.')
     else:
         messages.success(request, f'{medicine.name} added to cart.')
-    
+
     # Update session cart count
     request.session['cart_count'] = cart.items.count()
-    
+
+    # ✅ Support "Buy Now" style redirect
+    next_url = request.POST.get('next') or request.GET.get('next')
+    if next_url == 'checkout':
+        return redirect('store:checkout')
+
     return redirect('store:view_cart')
+
 
 @login_required
 def remove_from_cart(request, medicine_id):
     """Remove item from cart"""
-    cart = get_object_or_404(Cart, user=request.user)
-    cart_item = get_object_or_404(CartItem, cart=cart, medicine_id=medicine_id)
-    
+    # ✅ Use filter().first() instead of get_object_or_404
+    cart = Cart.objects.filter(user=request.user).first()
+    if not cart:
+        messages.warning(request, 'Your cart is empty.')
+        return redirect('store:view_cart')
+
+    cart_item = CartItem.objects.filter(cart=cart, medicine_id=medicine_id).first()
+    if not cart_item:
+        messages.warning(request, 'Item not found in cart.')
+        return redirect('store:view_cart')
+
     medicine_name = cart_item.medicine.name
     cart_item.delete()
-    
+
     messages.success(request, f'{medicine_name} removed from cart.')
     request.session['cart_count'] = cart.items.count()
-    
+
     return redirect('store:view_cart')
+
 
 @login_required
 def update_cart(request, medicine_id):
     """Update cart item quantity"""
     if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 1))
-        cart = get_object_or_404(Cart, user=request.user)
-        cart_item = get_object_or_404(CartItem, cart=cart, medicine_id=medicine_id)
-        
+        try:
+            quantity = int(request.POST.get('quantity', 1))
+        except (ValueError, TypeError):
+            quantity = 1
+
+        # ✅ Use filter().first() instead of get_object_or_404
+        cart = Cart.objects.filter(user=request.user).first()
+        if not cart:
+            messages.warning(request, 'Your cart is empty.')
+            return redirect('store:view_cart')
+
+        cart_item = CartItem.objects.filter(cart=cart, medicine_id=medicine_id).first()
+        if not cart_item:
+            messages.warning(request, 'Item not found in cart.')
+            return redirect('store:view_cart')
+
         if quantity <= 0:
             cart_item.delete()
             messages.info(request, 'Item removed from cart.')
@@ -395,9 +473,9 @@ def update_cart(request, medicine_id):
             messages.success(request, 'Cart updated successfully.')
         else:
             messages.warning(request, f'Only {cart_item.medicine.quantity} items available.')
-        
+
         request.session['cart_count'] = cart.items.count()
-    
+
     return redirect('store:view_cart')
 
 @login_required
@@ -524,7 +602,6 @@ def cancel_order(request, order_id):
     }
     return render(request, 'Store/cancel_order.html', context)
 
-# ==================== LAB TESTS ====================
 
 def lab_tests(request):
     """Lab tests page"""
@@ -542,23 +619,25 @@ def lab_tests(request):
     }
     return render(request, 'lab_tests.html', context)
 
-# ==================== WISHLIST VIEWS ====================
 
 @login_required
 def wishlist(request):
     """View user's wishlist"""
-    wishlist_items = UserWishlist.objects.filter(user=request.user).select_related('medicine')
+    wishlist_items = UserWishlist.objects.filter(
+        user=request.user
+    ).select_related('medicine', 'medicine__category')
     
     context = {
         'wishlist_items': wishlist_items,
     }
-    return render(request, 'wishlist.html', context)
+    return render(request, 'store/wishlist.html', context)
 
 @login_required
 def add_to_wishlist(request, medicine_id):
     """Add medicine to wishlist"""
-    medicine = get_object_or_404(Medicine, pk=medicine_id, is_active=True)
+    medicine = get_object_or_404(Medicine, id=medicine_id, is_active=True)
     
+    # Check if already in wishlist
     wishlist_item, created = UserWishlist.objects.get_or_create(
         user=request.user,
         medicine=medicine
@@ -569,18 +648,33 @@ def add_to_wishlist(request, medicine_id):
     else:
         messages.info(request, f'{medicine.name} is already in your wishlist.')
     
-    return redirect('medicine_detail', pk=medicine_id)
+    # Redirect back to previous page or medicine detail
+    next_url = request.GET.get('next', 'store:medicine_detail')
+    if next_url == 'store:medicine_detail':
+        return redirect('store:medicine_detail', pk=medicine_id)
+    return redirect(next_url)
 
 @login_required
-def remove_from_wishlist(request, medicine_id):
-    """Remove medicine from wishlist"""
+def remove_from_wishlist(request, item_id):
+    """Remove item from wishlist (AJAX)"""
+    if request.method == 'POST':
+        try:
+            wishlist_item = get_object_or_404(UserWishlist, id=item_id, user=request.user)
+            wishlist_item.delete()
+            return JsonResponse({'success': True, 'message': 'Item removed from wishlist'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+@login_required
+def remove_from_wishlist_get(request, medicine_id):
+    """Remove from wishlist (GET method - fallback)"""
     wishlist_item = get_object_or_404(UserWishlist, user=request.user, medicine_id=medicine_id)
     medicine_name = wishlist_item.medicine.name
     wishlist_item.delete()
-    
     messages.success(request, f'{medicine_name} removed from wishlist.')
-    return redirect('wishlist')
-
+    return redirect('store:wishlist')
 # ==================== PRESCRIPTION UPLOAD ====================
 
 @login_required
@@ -705,8 +799,6 @@ def admin_medicine_delete(request, pk):
         'medicine': medicine,
     }
     return render(request, 'admin/medicine_confirm_delete.html', context)
-
-# ==================== API VIEWS ====================
 
 @login_required
 def api_medicine_details(request):
@@ -1069,45 +1161,6 @@ def admin_dashboard(request):
     # Customer Home Page
     return render(request, 'store/home.html')
 
-# def register(request):
-#     if request.method == 'POST':
-#         form = UserRegistrationForm(request.POST)
-#         if form.is_valid():
-#             user = form.save()
-#             login(request, user)
-#             messages.success(request, 'Registration successful!')
-#             return redirect('/dashboard')
-#     else:
-#         form = UserRegistrationForm()
-#     return render(request, 'store/register.html', {'form': form})
-
-# def user_login(request):
-#     if request.method == "POST":
-#         username = request.POST.get("username")
-#         password = request.POST.get("password")
-
-#         user = authenticate(request, username=username, password=password)
-
-#         if user is not None:
-#             login(request, user)
-#             messages.success(request, "Login Successful")
-#             return redirect("/dashboard")
-#         else:
-#             messages.error(request, "Invalid Username or Password")
-
-#     return render(request, "store/login.html")
-
-# @login_required
-# def user_logout(request):
-#     logout(request)
-#     messages.info(request, 'Logged out successfully.')
-#     return redirect('/')
-
-# # Category Views
-# @login_required
-# def category_list(request):
-#     categories = Category.objects.all()
-#     return render(request, 'store/category_list.html', {'categories': categories})
 
 @login_required
 def category_create(request):
@@ -1144,32 +1197,6 @@ def category_delete(request, pk):
 
     return render(request, 'store/category_confirm_delete.html', {'object': category})
 
-# # Medicine Views
-# @login_required
-# def medicine_list(request):
-#     search_query = request.GET.get('search', '')
-#     category_id = request.GET.get('category', '')
-    
-#     medicines = Medicine.objects.select_related('category', 'supplier')
-    
-#     if search_query:
-#         medicines = medicines.filter(
-#             Q(name__icontains=search_query) |
-#             Q(generic_name__icontains=search_query) |
-#             Q(batch_number__icontains=search_query)
-#         )
-    
-#     if category_id:
-#         medicines = medicines.filter(category_id=category_id)
-    
-#     categories = Category.objects.all()
-    
-#     return render(request, 'store/medicine_list.html', {
-#         'medicines': medicines,
-#         'categories': categories,
-#         'search_query': search_query,
-#         'selected_category': category_id
-#     })
 
 @login_required
 def medicine_create(request):
@@ -1671,3 +1698,262 @@ def admin_order_export(request):
         ])
     
     return response
+@login_required
+def checkout(request):
+    """Checkout page"""
+    # ✅ Use filter().first() instead of get_object_or_404
+    cart = Cart.objects.filter(user=request.user).first()
+
+    if not cart:
+        messages.warning(request, 'Your cart is empty.')
+        return redirect('store:view_cart')
+
+    cart_items = cart.items.select_related('medicine').all()
+
+    if not cart_items.exists():
+        messages.warning(request, 'Your cart is empty. Add medicines to continue.')
+        return redirect('store:view_cart')
+
+    subtotal = sum(item.get_total() for item in cart_items)
+    tax = Decimal(str(round(float(subtotal) * 0.05, 2)))
+    discount = Decimal('0.00')
+    grand_total = subtotal + tax - discount
+
+    addresses = UserAddress.objects.filter(user=request.user, is_active=True)
+
+    context = {
+        'cart_items': cart_items,
+        'item_count': cart_items.count(),
+        'subtotal': subtotal,
+        'tax': tax,
+        'discount': discount,
+        'grand_total': grand_total,
+        'addresses': addresses,
+    }
+    return render(request, 'store/checkout.html', context)
+@login_required
+def place_order(request):
+    """Handle order placement with proper validation"""
+    if request.method != 'POST':
+        return redirect('store:checkout')
+
+    # ✅ Use filter().first() instead of get_object_or_404
+    cart = Cart.objects.filter(user=request.user).first()
+    if not cart:
+        messages.error(request, 'Your cart is empty.')
+        return redirect('store:view_cart')
+
+    cart_items = cart.items.select_related('medicine').all()
+    if not cart_items.exists():
+        messages.error(request, 'Your cart is empty. Please add items before checkout.')
+        return redirect('store:view_cart')
+
+    # Get address
+    address_id = request.POST.get('address_id')
+    if not address_id:
+        messages.error(request, 'Please select a delivery address.')
+        return redirect('store:checkout')
+
+    address = UserAddress.objects.filter(
+        id=address_id, user=request.user, is_active=True
+    ).first()
+
+    if not address:
+        messages.error(request, 'Invalid address. Please select another.')
+        return redirect('store:checkout')
+
+    payment_method = request.POST.get('payment_method', 'CSH')
+    delivery_charge = Decimal(request.POST.get('delivery_charge', '0') or '0')
+
+    # Calculate totals
+    subtotal = sum(item.get_total() for item in cart_items)
+    tax = Decimal(str(round(float(subtotal) * 0.05, 2)))
+    grand_total = subtotal + tax + delivery_charge
+
+    # Create order
+    order = CustomerOrder.objects.create(
+        user=request.user,
+        customer_name=address.name,
+        customer_email=address.email or request.user.email,
+        customer_phone=address.phone,
+        shipping_address=address.get_full_address(),
+        billing_address=address.get_full_address(),
+        order_status='PEN',
+        payment_status='PEN',
+        payment_method=payment_method,
+        subtotal=subtotal,
+        tax_amount=tax,
+        tax_rate=5,
+        shipping_charge=delivery_charge,
+        total_amount=grand_total,
+        grand_total=grand_total,
+    )
+
+    # Create order items + reduce stock
+    for item in cart_items:
+        OrderItem.objects.create(
+            order=order,
+            medicine=item.medicine,
+            quantity=item.quantity,
+            price=item.medicine.selling_price,
+            total=item.get_total()
+        )
+        item.medicine.quantity -= item.quantity
+        item.medicine.save()
+
+    # Status history
+    OrderStatusHistory.objects.create(
+        order=order,
+        status='PEN',
+        note='Order placed by customer',
+        changed_by=request.user
+    )
+
+    # Clear cart
+    cart_items.delete()
+
+    messages.success(request, f'Order #{order.order_number} placed successfully!')
+    return redirect('store:order_detail', order_id=order.id)
+
+# @login_required
+def buy_now(request, medicine_id):
+    """Buy Now - Direct purchase without adding to cart"""
+    medicine = get_object_or_404(Medicine, id=medicine_id, is_active=True)
+
+    if medicine.quantity <= 0:
+        messages.error(request, f'Sorry, {medicine.name} is out of stock.')
+        return redirect('store:medicine_detail', pk=medicine_id)
+
+    if request.method == 'POST':
+        quantity = int(request.POST.get('quantity', 1))
+
+        if quantity > medicine.quantity:
+            messages.error(request, f'Only {medicine.quantity} items available.')
+            return redirect('store:medicine_detail', pk=medicine_id)
+
+        # Get default address
+        address = UserAddress.objects.filter(
+            user=request.user, is_default=True, is_active=True
+        ).first()
+
+        if not address:
+            messages.warning(request, 'Please add a delivery address first.')
+            return redirect('store:address_create' + '?next=checkout')
+
+        subtotal = quantity * medicine.selling_price
+        tax = Decimal(str(round(float(subtotal) * 0.05, 2)))
+        grand_total = subtotal + tax
+
+        # ✅ Use CustomerOrder
+        order = CustomerOrder.objects.create(
+            user=request.user,
+            customer_name=address.name,
+            customer_email=address.email or request.user.email,
+            customer_phone=address.phone,
+            shipping_address=address.get_full_address(),
+            billing_address=address.get_full_address(),
+            order_status='PEN',
+            payment_status='PEN',
+            payment_method='CSH',
+            subtotal=subtotal,
+            tax_amount=tax,
+            shipping_charge=Decimal('0.00'),
+            total_amount=grand_total,
+            grand_total=grand_total,
+        )
+
+        OrderItem.objects.create(
+            order=order,
+            medicine=medicine,
+            quantity=quantity,
+            price=medicine.selling_price,
+            total=subtotal
+        )
+
+        medicine.quantity -= quantity
+        medicine.save()
+
+        OrderStatusHistory.objects.create(
+            order=order,
+            status='PEN',
+            note='Direct Buy Now order',
+            changed_by=request.user
+        )
+
+        messages.success(request, f'Order #{order.order_number} placed successfully!')
+        return redirect('store:my_orders', order_id=order.id)
+
+    context = {
+        'medicine': medicine,
+        'quantity': 1,
+        'total': medicine.selling_price,
+    }
+    return render(request, 'store/buy_now_checkout.html', context)
+
+# ==================== ADDRESS VIEWS ====================
+@login_required
+def address_list(request):
+    addresses = UserAddress.objects.filter(user=request.user, is_active=True)
+    return render(request, 'store/address_list.html', {'addresses': addresses})
+
+
+@login_required
+def address_create(request):
+    if request.method == 'POST':
+        form = UserAddressForm(request.POST)
+        if form.is_valid():
+            address = form.save(commit=False)
+            address.user = request.user
+            if not UserAddress.objects.filter(user=request.user).exists():
+                address.is_default = True
+            address.save()
+            messages.success(request, 'Address added successfully!')
+
+            # Redirect back to checkout if coming from there
+            if request.GET.get('next') == 'checkout':
+                return redirect('store:checkout')
+            return redirect('store:address_list')
+    else:
+        form = UserAddressForm()
+
+    return render(request, 'store/address_form.html', {
+        'form': form,
+        'title': 'Add New Address'
+    })
+
+
+@login_required
+def address_update(request, pk):
+    address = get_object_or_404(UserAddress, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = UserAddressForm(request.POST, instance=address)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Address updated successfully!')
+            return redirect('store:address_list')
+    else:
+        form = UserAddressForm(instance=address)
+    return render(request, 'store/address_form.html', {
+        'form': form,
+        'title': 'Update Address'
+    })
+
+
+@login_required
+def address_delete(request, pk):
+    address = get_object_or_404(UserAddress, pk=pk, user=request.user)
+    if request.method == 'POST':
+        address.delete()
+        messages.success(request, 'Address deleted successfully!')
+        return redirect('store:address_list')
+    return render(request, 'store/address_confirm_delete.html', {'address': address})
+
+
+@login_required
+def address_set_default(request, pk):
+    address = get_object_or_404(UserAddress, pk=pk, user=request.user)
+    UserAddress.objects.filter(user=request.user).update(is_default=False)
+    address.is_default = True
+    address.save()
+    messages.success(request, 'Default address updated.')
+    return redirect('store:address_list')

@@ -115,3 +115,42 @@ class OrderCreateForm(forms.ModelForm):
             'billing_address': forms.Textarea(attrs={'rows': 4}),
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
+from django import forms
+from .models import UserAddress
+
+class UserAddressForm(forms.ModelForm):
+    class Meta:
+        model = UserAddress
+        fields = [
+            'address_type', 'address_label', 'name', 'phone',
+            'alternate_phone', 'email', 'address_line1', 'address_line2',
+            'landmark', 'city', 'state', 'pincode', 'country',
+            'is_default', 'is_billing'
+        ]
+        widgets = {
+            'address_type': forms.Select(attrs={'class': 'form-select'}),
+            'address_label': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Home, Office'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '10-digit mobile number'}),
+            'alternate_phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Optional'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'you@example.com'}),
+            'address_line1': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'House/Flat, Building, Street'}),
+            'address_line2': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Locality, Area (Optional)'}),
+            'landmark': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nearby landmark'}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'state': forms.TextInput(attrs={'class': 'form-control'}),
+            'pincode': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '6-digit pincode'}),
+            'country': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def clean_pincode(self):
+        pincode = self.cleaned_data.get('pincode')
+        if pincode and (len(pincode) != 6 or not pincode.isdigit()):
+            raise forms.ValidationError("Pincode must be 6 digits.")
+        return pincode
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone and (len(phone) != 10 or not phone.isdigit()):
+            raise forms.ValidationError("Phone number must be 10 digits.")
+        return phone

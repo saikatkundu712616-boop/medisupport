@@ -1,0 +1,940 @@
+{% extends 'store/header.html' %}
+{% load static %}
+
+{% block title %}Checkout | MediStore{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== CHECKOUT WRAPPER ===== */
+    .checkout-wrapper {
+        padding: 30px 0 60px;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+
+    /* ===== PROGRESS STEPS ===== */
+    .checkout-steps {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0;
+        margin-bottom: 40px;
+        padding: 20px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+    }
+
+    .checkout-step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .checkout-step .step-number {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .checkout-step.active .step-number {
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+
+    .checkout-step.completed .step-number {
+        background: #22c55e;
+        color: white;
+    }
+
+    .checkout-step .step-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #94a3b8;
+    }
+
+    .checkout-step.active .step-label {
+        color: #0f172a;
+    }
+
+    .step-connector {
+        width: 60px;
+        height: 2px;
+        background: #e5e7eb;
+        margin: 0 10px;
+    }
+
+    .step-connector.completed {
+        background: #22c55e;
+    }
+
+    /* ===== SECTION CARDS ===== */
+    .checkout-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #e5e7eb;
+        margin-bottom: 20px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+
+    .checkout-card:hover {
+        box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    }
+
+    .checkout-card .card-head {
+        padding: 18px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fafbfc;
+    }
+
+    .checkout-card .card-head h5 {
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .checkout-card .card-head h5 i {
+        color: #3498db;
+    }
+
+    .checkout-card .card-head .edit-link {
+        font-size: 13px;
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .checkout-card .card-head .edit-link:hover {
+        color: #2563eb;
+        text-decoration: underline;
+    }
+
+    .checkout-card .card-body {
+        padding: 24px;
+    }
+
+    /* ===== ADDRESS SELECTION ===== */
+    .address-option {
+        border: 2px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+    }
+
+    .address-option:hover {
+        border-color: #3498db;
+        background: #f8fbff;
+    }
+
+    .address-option.selected {
+        border-color: #3498db;
+        background: #f0f9ff;
+        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.08);
+    }
+
+    .address-option .radio-check {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #cbd5e1;
+        border-radius: 50%;
+        display: inline-block;
+        position: relative;
+        margin-right: 12px;
+        vertical-align: middle;
+        transition: all 0.3s;
+        flex-shrink: 0;
+    }
+
+    .address-option.selected .radio-check {
+        border-color: #3498db;
+        background: #3498db;
+    }
+
+    .address-option.selected .radio-check::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 8px;
+        height: 8px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    .address-option .address-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .address-option .address-details {
+        flex: 1;
+    }
+
+    .address-option .address-details .name-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 4px;
+    }
+
+    .address-option .address-details .name-row strong {
+        font-size: 15px;
+        color: #0f172a;
+    }
+
+    .address-option .address-details .name-row .badge-default {
+        background: #dcfce7;
+        color: #16a34a;
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .address-option .address-details .phone {
+        font-size: 13px;
+        color: #64748b;
+        margin-bottom: 4px;
+    }
+
+    .address-option .address-details .full-address {
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.5;
+    }
+
+    /* ===== ADD NEW ADDRESS BUTTON ===== */
+    .btn-add-address {
+        width: 100%;
+        padding: 14px;
+        border: 2px dashed #e5e7eb;
+        border-radius: 14px;
+        background: white;
+        color: #3498db;
+        font-weight: 600;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .btn-add-address:hover {
+        border-color: #3498db;
+        background: #f0f9ff;
+    }
+
+    /* ===== PAYMENT METHODS ===== */
+    .payment-option {
+        border: 2px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .payment-option:hover {
+        border-color: #3498db;
+        background: #f8fbff;
+    }
+
+    .payment-option.selected {
+        border-color: #3498db;
+        background: #f0f9ff;
+        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.08);
+    }
+
+    .payment-option .payment-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .payment-option.selected .payment-icon {
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+    }
+
+    .payment-option .payment-info {
+        flex: 1;
+    }
+
+    .payment-option .payment-info h6 {
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 2px;
+        font-size: 14px;
+    }
+
+    .payment-option .payment-info p {
+        font-size: 12px;
+        color: #64748b;
+        margin: 0;
+    }
+
+    /* ===== ORDER ITEMS ===== */
+    .order-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+    .order-item .item-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 1px solid #f1f5f9;
+    }
+
+    .order-item .item-img img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        padding: 6px;
+    }
+
+    .order-item .item-img .placeholder {
+        font-size: 1.8rem;
+        opacity: 0.3;
+    }
+
+    .order-item .item-info {
+        flex: 1;
+    }
+
+    .order-item .item-info h6 {
+        font-weight: 700;
+        font-size: 14px;
+        color: #0f172a;
+        margin: 0 0 2px;
+    }
+
+    .order-item .item-info .item-meta {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .order-item .item-price {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 14px;
+    }
+
+    /* ===== ORDER SUMMARY ===== */
+    .order-summary-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #e5e7eb;
+        position: sticky;
+        top: 100px;
+        overflow: hidden;
+    }
+
+    .order-summary-card .summary-head {
+        padding: 18px 24px;
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: white;
+    }
+
+    .order-summary-card .summary-head h5 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 16px;
+    }
+
+    .order-summary-card .summary-body {
+        padding: 20px 24px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        font-size: 14px;
+        color: #475569;
+    }
+
+    .summary-row.discount {
+        color: #16a34a;
+    }
+
+    .summary-row.total {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0f172a;
+        padding-top: 15px;
+        border-top: 2px dashed #e5e7eb;
+        margin-top: 10px;
+    }
+
+    .summary-row .value {
+        font-weight: 600;
+    }
+
+    .summary-row.total .value {
+        color: #16a34a;
+        font-size: 1.3rem;
+    }
+
+    /* ===== COUPON ===== */
+    .coupon-section {
+        padding: 16px 0;
+        border-top: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+        margin: 12px 0;
+    }
+
+    .coupon-input-group {
+        display: flex;
+        gap: 8px;
+    }
+
+    .coupon-input-group input {
+        flex: 1;
+        padding: 10px 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 13px;
+        outline: none;
+        transition: all 0.3s;
+        text-transform: uppercase;
+    }
+
+    .coupon-input-group input:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.08);
+    }
+
+    .coupon-input-group button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .coupon-input-group button:hover {
+        transform: scale(1.02);
+    }
+
+    /* ===== PLACE ORDER BUTTON ===== */
+    .btn-place-order {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        font-weight: 800;
+        font-size: 16px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+        cursor: pointer;
+    }
+
+    .btn-place-order:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(34, 197, 94, 0.35);
+    }
+
+    .btn-place-order:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .secure-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 14px;
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .secure-note i {
+        color: #22c55e;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-cart {
+        text-align: center;
+        padding: 80px 20px;
+    }
+
+    .empty-cart i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 20px;
+    }
+
+    .empty-cart h4 {
+        color: #0f172a;
+        font-weight: 700;
+    }
+
+    .empty-cart p {
+        color: #64748b;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 992px) {
+        .order-summary-card {
+            position: static;
+            margin-top: 20px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .checkout-steps {
+            padding: 15px;
+            overflow-x: auto;
+            justify-content: flex-start;
+        }
+
+        .checkout-step .step-label {
+            display: none;
+        }
+
+        .step-connector {
+            width: 30px;
+        }
+
+        .checkout-card .card-body {
+            padding: 18px;
+        }
+
+        .order-item .item-img {
+            width: 50px;
+            height: 50px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-wrapper">
+    <div class="container">
+
+        <!-- ===== PROGRESS STEPS ===== -->
+        <div class="checkout-steps">
+            <div class="checkout-step completed">
+                <div class="step-number"><i class="fas fa-check"></i></div>
+                <span class="step-label">Cart</span>
+            </div>
+            <div class="step-connector completed"></div>
+            <div class="checkout-step active">
+                <div class="step-number">2</div>
+                <span class="step-label">Checkout</span>
+            </div>
+            <div class="step-connector"></div>
+            <div class="checkout-step">
+                <div class="step-number">3</div>
+                <span class="step-label">Confirmation</span>
+            </div>
+        </div>
+
+        {% if cart_items %}
+        <form method="post" action="{% url 'store:place_order' %}" id="checkoutForm">
+            {% csrf_token %}
+            <div class="row g-4">
+                <!-- ===== LEFT: DELIVERY + PAYMENT ===== -->
+                <div class="col-lg-8">
+
+                    <!-- Delivery Address -->
+                    <div class="checkout-card">
+                        <div class="card-head">
+                            <h5><i class="fas fa-map-marker-alt"></i> Delivery Address</h5>
+                            <a href="{% url 'store:address_create' %}" class="edit-link">
+                                <i class="fas fa-plus"></i> Add New
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if addresses %}
+                                {% for address in addresses %}
+                                <div class="address-option {% if address.is_default %}selected{% endif %}"
+                                     onclick="selectAddress(this, {{ address.id }})">
+                                    <div class="address-content">
+                                        <span class="radio-check"></span>
+                                        <div class="address-details">
+                                            <div class="name-row">
+                                                <strong>{{ address.name }}</strong>
+                                                {% if address.is_default %}
+                                                    <span class="badge-default">Default</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="phone">
+                                                <i class="fas fa-phone-alt"></i> {{ address.phone }}
+                                            </div>
+                                            <div class="full-address">
+                                                {{ address.get_full_address }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+
+                                <input type="hidden" name="address_id" id="addressId"
+                                       value="{% for a in addresses %}{% if a.is_default %}{{ a.id }}{% endif %}{% endfor %}">
+
+                                <button type="button" class="btn-add-address mt-2"
+                                        onclick="window.location.href='{% url 'store:address_create' %}'">
+                                    <i class="fas fa-plus-circle"></i> Add New Address
+                                </button>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-map-marked-alt" style="font-size: 3rem; color: #cbd5e1;"></i>
+                                    <h6 class="mt-3 fw-bold">No Address Found</h6>
+                                    <p class="text-muted small">Please add a delivery address to continue</p>
+                                    <a href="{% url 'store:address_create' %}" class="btn btn-primary rounded-pill px-4">
+                                        <i class="fas fa-plus"></i> Add Address
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="checkout-card">
+                        <div class="card-head">
+                            <h5><i class="fas fa-credit-card"></i> Payment Method</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="payment-option selected" onclick="selectPayment(this, 'CSH')">
+                                <div class="payment-icon">💵</div>
+                                <div class="payment-info">
+                                    <h6>Cash on Delivery</h6>
+                                    <p>Pay when you receive your order</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-option" onclick="selectPayment(this, 'UPI')">
+                                <div class="payment-icon">📱</div>
+                                <div class="payment-info">
+                                    <h6>UPI Payment</h6>
+                                    <p>Google Pay, PhonePe, Paytm & more</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-option" onclick="selectPayment(this, 'CRD')">
+                                <div class="payment-icon">💳</div>
+                                <div class="payment-info">
+                                    <h6>Credit / Debit Card</h6>
+                                    <p>Visa, Mastercard, RuPay accepted</p>
+                                </div>
+                            </div>
+
+                            <div class="payment-option" onclick="selectPayment(this, 'NBK')">
+                                <div class="payment-icon">🏦</div>
+                                <div class="payment-info">
+                                    <h6>Net Banking</h6>
+                                    <p>All major banks supported</p>
+                                </div>
+                            </div>
+
+                            <input type="hidden" name="payment_method" id="paymentMethod" value="CSH">
+                        </div>
+                    </div>
+
+                    <!-- Delivery Options -->
+                    <div class="checkout-card">
+                        <div class="card-head">
+                            <h5><i class="fas fa-truck"></i> Delivery Options</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="payment-option selected" onclick="selectDelivery(this, 0, 'Standard')">
+                                <div class="payment-icon">🚚</div>
+                                <div class="payment-info">
+                                    <h6>Standard Delivery</h6>
+                                    <p>Delivered in 3-5 business days</p>
+                                </div>
+                                <div class="fw-bold text-success">FREE</div>
+                            </div>
+
+                            <div class="payment-option" onclick="selectDelivery(this, 99, 'Express')">
+                                <div class="payment-icon">⚡</div>
+                                <div class="payment-info">
+                                    <h6>Express Delivery</h6>
+                                    <p>Delivered in 1-2 business days</p>
+                                </div>
+                                <div class="fw-bold text-danger">₹99</div>
+                            </div>
+
+                            <input type="hidden" name="delivery_charge" id="deliveryCharge" value="0">
+                            <input type="hidden" name="delivery_method" id="deliveryMethod" value="Standard">
+                        </div>
+                    </div>
+
+                    <!-- Order Items -->
+                    <div class="checkout-card">
+                        <div class="card-head">
+                            <h5><i class="fas fa-shopping-bag"></i> Order Items ({{ cart_items|length }})</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for item in cart_items %}
+                            <div class="order-item">
+                                <div class="item-img">
+                                    {% if item.medicine.image %}
+                                        <img src="{{ item.medicine.image.url }}" alt="{{ item.medicine.name }}">
+                                    {% else %}
+                                        <div class="placeholder">💊</div>
+                                    {% endif %}
+                                </div>
+                                <div class="item-info">
+                                    <h6>{{ item.medicine.name }}</h6>
+                                    <div class="item-meta">
+                                        Qty: {{ item.quantity }} × ₹{{ item.medicine.selling_price }}
+                                    </div>
+                                </div>
+                                <div class="item-price">₹{{ item.subtotal }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ===== RIGHT: ORDER SUMMARY ===== -->
+                <div class="col-lg-4">
+                    <div class="order-summary-card">
+                        <div class="summary-head">
+                            <h5><i class="fas fa-receipt"></i> Order Summary</h5>
+                        </div>
+                        <div class="summary-body">
+
+                            <div class="summary-row">
+                                <span>Subtotal ({{ item_count }} items)</span>
+                                <span class="value">₹{{ subtotal }}</span>
+                            </div>
+
+                            <div class="summary-row" id="deliveryRow">
+                                <span>Delivery Charge</span>
+                                <span class="value" id="deliveryText">FREE</span>
+                            </div>
+
+                            {% if discount > 0 %}
+                            <div class="summary-row discount">
+                                <span>Discount</span>
+                                <span class="value">- ₹{{ discount }}</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="summary-row">
+                                <span>Tax (GST 5%)</span>
+                                <span class="value">₹{{ tax|default:"0" }}</span>
+                            </div>
+
+                            <div class="summary-row total">
+                                <span>Grand Total</span>
+                                <span class="value" id="grandTotal">₹{{ grand_total }}</span>
+                            </div>
+
+                            <!-- Coupon -->
+                            <div class="coupon-section">
+                                <div class="coupon-input-group">
+                                    <input type="text" name="coupon_code" placeholder="Coupon Code"
+                                           value="{{ coupon_code|default:'' }}">
+                                    <button type="button" onclick="applyCoupon()">Apply</button>
+                                </div>
+                            </div>
+
+                            <!-- Place Order -->
+                            <button type="submit" class="btn-place-order" id="placeOrderBtn"
+                                    {% if not addresses %}disabled{% endif %}>
+                                <i class="fas fa-lock"></i>
+                                {% if addresses %}Place Order{% else %}Add Address First{% endif %}
+                            </button>
+
+                            <div class="secure-note">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>100% Secure & Safe Payment</span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {% else %}
+        <!-- ===== EMPTY CART ===== -->
+        <div class="empty-cart">
+            <i class="fas fa-shopping-cart"></i>
+            <h4>Your Cart is Empty</h4>
+            <p>Add some medicines to proceed to checkout.</p>
+            <a href="{% url 'store:medicines' %}" class="btn btn-primary rounded-pill px-5 py-3 mt-3">
+                <i class="fas fa-shopping-bag"></i> Start Shopping
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ===== SELECT ADDRESS =====
+    function selectAddress(el, id) {
+        document.querySelectorAll('.address-option').forEach(a => a.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('addressId').value = id;
+    }
+
+    // ===== SELECT PAYMENT =====
+    function selectPayment(el, method) {
+        document.querySelectorAll('.payment-option').forEach(p => p.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('paymentMethod').value = method;
+    }
+
+    // ===== SELECT DELIVERY =====
+    function selectDelivery(el, charge, method) {
+        const parent = el.closest('.card-body');
+        parent.querySelectorAll('.payment-option').forEach(p => p.classList.remove('selected'));
+        el.classList.add('selected');
+
+        document.getElementById('deliveryCharge').value = charge;
+        document.getElementById('deliveryMethod').value = method;
+
+        // Update summary
+        const deliveryText = document.getElementById('deliveryText');
+        deliveryText.textContent = charge > 0 ? '₹' + charge : 'FREE';
+        deliveryText.style.color = charge > 0 ? '#dc2626' : '#16a34a';
+
+        updateGrandTotal(charge);
+    }
+
+    // ===== UPDATE GRAND TOTAL =====
+    let baseSubtotal = parseFloat('{{ subtotal }}') || 0;
+    let baseTax = parseFloat('{{ tax|default:"0" }}') || 0;
+    let baseDiscount = parseFloat('{{ discount|default:"0" }}') || 0;
+
+    function updateGrandTotal(deliveryCharge = 0) {
+        const total = baseSubtotal + baseTax + deliveryCharge - baseDiscount;
+        document.getElementById('grandTotal').textContent = '₹' + total.toFixed(2);
+    }
+
+    {% comment %} // ===== APPLY COUPON =====
+    function applyCoupon() {
+        const code = document.querySelector('input[name="coupon_code"]').value.trim().toUpperCase();
+        if (!code) {
+            showToast('Please enter a coupon code');
+            return;
+        }
+        // Placeholder - implement server-side coupon validation
+        fetch("{% url 'store:apply_coupon' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code: code })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Coupon applied! You saved ₹' + data.discount);
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                showToast(data.message || 'Invalid coupon');
+            }
+        })
+        .catch(() => showToast('Error applying coupon'));
+    } {% endcomment %}
+
+    // ===== FORM SUBMIT =====
+    document.getElementById('checkoutForm')?.addEventListener('submit', function(e) {
+        const btn = document.getElementById('placeOrderBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Placing Order...';
+    });
+
+    // ===== HELPERS =====
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+
+    function showToast(msg) {
+        let toast = document.getElementById('checkoutToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'checkoutToast';
+            toast.style.cssText = `
+                position: fixed; bottom: 30px; right: 30px;
+                background: #0f172a; color: white; padding: 14px 24px;
+                border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                font-weight: 600; z-index: 9999; font-size: 14px;
+                transform: translateY(100px); opacity: 0;
+                transition: all 0.4s ease;
+            `;
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+        setTimeout(() => {
+            toast.style.transform = 'translateY(100px)';
+            toast.style.opacity = '0';
+        }, 3000);
+    }
+</script>
+{% endblock %}
