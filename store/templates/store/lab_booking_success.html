@@ -1,0 +1,119 @@
+{% extends 'store/header.html' %}
+
+{% block title %}Booking Confirmed | MediStore{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+
+            <!-- Success Animation -->
+            <div class="text-center mb-4">
+                <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 15px 40px rgba(34, 197, 94, 0.3); animation: pop 0.5s ease;">
+                    <i class="fas fa-check" style="font-size: 3rem; color: white;"></i>
+                </div>
+                <h2 class="fw-bold mt-4 mb-2">Booking Confirmed! 🎉</h2>
+                <p class="text-muted">Your lab test has been booked successfully.</p>
+                <div class="badge bg-primary fs-6 px-4 py-2 mt-2">Booking ID: {{ booking.booking_id }}</div>
+            </div>
+
+            <!-- Booking Details -->
+            <div class="card shadow-sm border-0 rounded-4 mb-3">
+                <div class="card-header bg-white rounded-4 rounded-bottom-0 pt-4 px-4 border-0">
+                    <h5 class="fw-bold mb-0"><i class="fas fa-flask text-primary"></i> Test Details</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Test Name</small>
+                            <strong>{{ booking.test_name }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Type</small>
+                            <strong>{{ booking.test_type|title }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Amount Paid</small>
+                            <strong class="text-success">₹{{ booking.price }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Payment Method</small>
+                            <strong>{{ booking.payment_method|title }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collection Details -->
+            <div class="card shadow-sm border-0 rounded-4 mb-3">
+                <div class="card-header bg-white rounded-4 rounded-bottom-0 pt-4 px-4 border-0">
+                    <h5 class="fw-bold mb-0"><i class="fas fa-home text-primary"></i> Sample Collection</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Collection Date</small>
+                            <strong>{{ booking.collection_date }}</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted d-block">Time Slot</small>
+                            <strong>{{ booking.collection_time }}</strong>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">Collection Address</small>
+                            <strong>{{ booking.address }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What's Next -->
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-info-circle text-primary"></i> What's Next?</h6>
+                    <div class="d-flex gap-3 mb-3">
+                        <div style="width: 32px; height: 32px; background: #eef2ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #2563eb; font-weight: 700; flex-shrink: 0;">1</div>
+                        <div>
+                            <strong>Confirmation Call</strong>
+                            <p class="text-muted small mb-0">Our team will call you within 30 minutes to confirm</p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3 mb-3">
+                        <div style="width: 32px; height: 32px; background: #eef2ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #2563eb; font-weight: 700; flex-shrink: 0;">2</div>
+                        <div>
+                            <strong>Sample Collection</strong>
+                            <p class="text-muted small mb-0">Phlebotomist arrives at your scheduled slot</p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <div style="width: 32px; height: 32px; background: #eef2ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #2563eb; font-weight: 700; flex-shrink: 0;">3</div>
+                        <div>
+                            <strong>Reports Delivered</strong>
+                            <p class="text-muted small mb-0">Digital reports sent via email/WhatsApp within 24 hours</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'store:lab_tests' %}" class="btn btn-primary rounded-pill px-4 flex-fill">
+                    <i class="fas fa-plus"></i> Book Another Test
+                </a>
+                <a href="{% url 'store:home' %}" class="btn btn-outline-secondary rounded-pill px-4 flex-fill">
+                    <i class="fas fa-home"></i> Go Home
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes pop {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,768 @@
+{% extends 'store/header.html' %}
+{% load static %}
+
+{% block title %}Cancel Order #{{ order.order_number }} | MediStore{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== CANCEL WRAPPER ===== */
+    .cancel-wrapper {
+        padding: 30px 0 60px;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+
+    /* ===== BREADCRUMB ===== */
+    .cancel-breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0 0 20px;
+    }
+
+    .cancel-breadcrumb .breadcrumb-item a {
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s;
+    }
+
+    .cancel-breadcrumb .breadcrumb-item a:hover {
+        color: #3498db;
+    }
+
+    .cancel-breadcrumb .breadcrumb-item.active {
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    /* ===== WARNING HEADER ===== */
+    .cancel-header {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 25px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cancel-header::before {
+        content: '!';
+        position: absolute;
+        right: -20px;
+        top: -50px;
+        font-size: 14rem;
+        opacity: 0.08;
+        font-weight: 900;
+    }
+
+    .cancel-header .warn-icon {
+        width: 70px;
+        height: 70px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        font-size: 2rem;
+        animation: shake 0.6s ease;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-10deg); }
+        75% { transform: rotate(10deg); }
+    }
+
+    .cancel-header h3 {
+        font-weight: 800;
+        margin-bottom: 6px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .cancel-header p {
+        margin: 0;
+        opacity: 0.95;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ===== MAIN CARD ===== */
+    .cancel-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        margin-bottom: 25px;
+    }
+
+    .cancel-card .card-head {
+        padding: 18px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        background: #fafbfc;
+    }
+
+    .cancel-card .card-head h5 {
+        margin: 0;
+        font-weight: 800;
+        font-size: 15px;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .cancel-card .card-head h5 i {
+        color: #3498db;
+    }
+
+    .cancel-card .card-body {
+        padding: 24px;
+    }
+
+    /* ===== ORDER INFO GRID ===== */
+    .order-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .order-info-grid .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .order-info-grid .info-item .label {
+        font-size: 12px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .order-info-grid .info-item .value {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 15px;
+    }
+
+    .order-info-grid .info-item .value.order-number {
+        font-family: 'Courier New', monospace;
+        color: #3498db;
+    }
+
+    /* ===== ORDER ITEMS PREVIEW ===== */
+    .order-items-preview {
+        background: #f8fafc;
+        border-radius: 14px;
+        padding: 16px;
+        margin-top: 15px;
+    }
+
+    .order-items-preview .preview-title {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .preview-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .preview-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .preview-item .preview-img {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 1px solid #e5e7eb;
+    }
+
+    .preview-item .preview-img img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        padding: 3px;
+    }
+
+    .preview-item .preview-img .placeholder {
+        font-size: 1.5rem;
+        opacity: 0.3;
+    }
+
+    .preview-item .preview-info {
+        flex: 1;
+    }
+
+    .preview-item .preview-info h6 {
+        font-weight: 700;
+        font-size: 13px;
+        color: #0f172a;
+        margin: 0 0 2px;
+    }
+
+    .preview-item .preview-info .preview-meta {
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .preview-item .preview-price {
+        font-weight: 700;
+        font-size: 13px;
+        color: #0f172a;
+    }
+
+    /* ===== WARNING BOX ===== */
+    .warning-box {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+    }
+
+    .warning-box i {
+        color: #d97706;
+        font-size: 20px;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .warning-box .warning-content h6 {
+        font-weight: 800;
+        color: #78350f;
+        margin: 0 0 6px;
+        font-size: 14px;
+    }
+
+    .warning-box .warning-content ul {
+        margin: 0;
+        padding-left: 18px;
+        color: #78350f;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    /* ===== REASON FORM ===== */
+    .reason-form-group {
+        margin-bottom: 18px;
+    }
+
+    .reason-form-group label {
+        display: block;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .reason-form-group label .required {
+        color: #dc2626;
+    }
+
+    .reason-form-group label .optional {
+        color: #94a3b8;
+        font-weight: 500;
+        font-size: 12px;
+    }
+
+    .reason-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .reason-option {
+        position: relative;
+    }
+
+    .reason-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .reason-option label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+        color: #475569;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .reason-option label:hover {
+        border-color: #3498db;
+        background: #f8fbff;
+    }
+
+    .reason-option input[type="radio"]:checked + label {
+        border-color: #dc2626;
+        background: #fef2f2;
+        color: #dc2626;
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.08);
+    }
+
+    .reason-option label .radio-icon {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #cbd5e1;
+        border-radius: 50%;
+        flex-shrink: 0;
+        position: relative;
+        transition: all 0.3s;
+    }
+
+    .reason-option input[type="radio"]:checked + label .radio-icon {
+        border-color: #dc2626;
+        background: #dc2626;
+    }
+
+    .reason-option input[type="radio"]:checked + label .radio-icon::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 8px;
+        height: 8px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    .custom-reason-textarea {
+        width: 100%;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+        resize: vertical;
+        min-height: 100px;
+        transition: all 0.3s;
+        font-family: inherit;
+    }
+
+    .custom-reason-textarea:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.08);
+    }
+
+    /* ===== ACTION BUTTONS ===== */
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-confirm-cancel {
+        flex: 1;
+        min-width: 200px;
+        padding: 14px 28px;
+        border: none;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        font-weight: 800;
+        font-size: 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .btn-confirm-cancel:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(220, 38, 38, 0.35);
+    }
+
+    .btn-confirm-cancel:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-keep-order {
+        flex: 1;
+        min-width: 200px;
+        padding: 14px 28px;
+        border: 2px solid #e5e7eb;
+        border-radius: 50px;
+        background: white;
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+
+    .btn-keep-order:hover {
+        border-color: #16a34a;
+        color: #16a34a;
+        background: #f0fdf4;
+        transform: translateY(-3px);
+    }
+
+    /* ===== CAN'T CANCEL STATE ===== */
+    .cant-cancel-box {
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .cant-cancel-box .icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 2.5rem;
+        color: #94a3b8;
+    }
+
+    .cant-cancel-box h4 {
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 10px;
+    }
+
+    .cant-cancel-box p {
+        color: #64748b;
+        max-width: 400px;
+        margin: 0 auto 25px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .cancel-header {
+            padding: 25px 20px;
+        }
+
+        .cancel-header h3 {
+            font-size: 1.2rem;
+        }
+
+        .order-info-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .reason-options {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-confirm-cancel,
+        .btn-keep-order {
+            min-width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .order-info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cancel-wrapper">
+    <div class="container">
+
+        <!-- ===== BREADCRUMB ===== -->
+        <nav aria-label="breadcrumb" class="cancel-breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'store:home' %}"><i class="fas fa-home"></i> Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'store:my_orders' %}">My Orders</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'store:order_detail' order.id %}">#{{ order.order_number }}</a></li>
+                <li class="breadcrumb-item active">Cancel</li>
+            </ol>
+        </nav>
+
+        {% if order.order_status in 'PEN,PRO' %}
+            <!-- ===== CANCEL FORM ===== -->
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+
+                    <!-- Warning Header -->
+                    <div class="cancel-header">
+                        <div class="warn-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3>Cancel This Order?</h3>
+                        <p>This action cannot be undone. Please confirm your decision below.</p>
+                    </div>
+
+                    <!-- Order Info Card -->
+                    <div class="cancel-card">
+                        <div class="card-head">
+                            <h5><i class="fas fa-receipt"></i> Order Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="order-info-grid">
+                                <div class="info-item">
+                                    <span class="label">Order Number</span>
+                                    <span class="value order-number">#{{ order.order_number }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Order Date</span>
+                                    <span class="value">{{ order.order_date|date:"d M Y" }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Total Amount</span>
+                                    <span class="value" style="color: #16a34a;">₹{{ order.grand_total }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">Items</span>
+                                    <span class="value">{{ order.items.count }} item{{ order.items.count|pluralize }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Order Items Preview -->
+                            {% if order.items.exists %}
+                                <div class="order-items-preview">
+                                    <div class="preview-title">Items in this order</div>
+                                    {% for item in order.items.all|slice:":3" %}
+                                        <div class="preview-item">
+                                            <div class="preview-img">
+                                                {% if item.medicine.image %}
+                                                    <img src="{{ item.medicine.image.url }}" alt="{{ item.medicine_name }}">
+                                                {% else %}
+                                                    <div class="placeholder">💊</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="preview-info">
+                                                <h6>{{ item.medicine_name|default:item.medicine.name }}</h6>
+                                                <div class="preview-meta">Qty: {{ item.quantity }} × ₹{{ item.price }}</div>
+                                            </div>
+                                            <div class="preview-price">₹{{ item.total }}</div>
+                                        </div>
+                                    {% endfor %}
+                                    {% if order.items.count > 3 %}
+                                        <div class="text-center mt-2">
+                                            <small class="text-muted">+ {{ order.items.count|add:"-3" }} more item{{ order.items.count|add:"-3"|pluralize }}</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Cancellation Form -->
+                    <form method="post" id="cancelOrderForm">
+                        {% csrf_token %}
+
+                        <!-- Warning Box -->
+                        <div class="cancel-card">
+                            <div class="card-head">
+                                <h5><i class="fas fa-info-circle"></i> Before You Cancel</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="warning-box">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <div class="warning-content">
+                                        <h6>Please note the following:</h6>
+                                        <ul>
+                                            <li>Stock will be restored for all items</li>
+                                            <li>If payment was made, refund will be processed in 5-7 business days</li>
+                                            <li>You'll receive a confirmation email once cancelled</li>
+                                            <li>You can reorder anytime from your orders page</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reason Form -->
+                        <div class="cancel-card">
+                            <div class="card-head">
+                                <h5><i class="fas fa-comment-alt"></i> Reason for Cancellation</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="reason-form-group">
+                                    <label>Select a reason <span class="required">*</span></label>
+                                    <div class="reason-options">
+                                        <div class="reason-option">
+                                            <input type="radio" name="reason" id="reason1" value="Ordered by mistake" required>
+                                            <label for="reason1">
+                                                <span class="radio-icon"></span>
+                                                Ordered by mistake
+                                            </label>
+                                        </div>
+                                        <div class="reason-option">
+                                            <input type="radio" name="reason" id="reason2" value="Found cheaper price elsewhere">
+                                            <label for="reason2">
+                                                <span class="radio-icon"></span>
+                                                Found cheaper elsewhere
+                                            </label>
+                                        </div>
+                                        <div class="reason-option">
+                                            <input type="radio" name="reason" id="reason3" value="Delivery time too long">
+                                            <label for="reason3">
+                                                <span class="radio-icon"></span>
+                                                Delivery too long
+                                            </label>
+                                        </div>
+                                        <div class="reason-option">
+                                            <input type="radio" name="reason" id="reason4" value="Changed my mind">
+                                            <label for="reason4">
+                                                <span class="radio-icon"></span>
+                                                Changed my mind
+                                            </label>
+                                        </div>
+                                        <div class="reason-option">
+                                            <input type="radio" name="reason" id="reason5" value="Prescription not needed">
+                                            <label for="reason5">
+                                                <span class="radio-icon"></span>
+                                                Prescription not needed
+                                            </label>
+                                        </div>
+                                        <div class="reason-option">
+                                            <input type="radio" name="reason" id="reason6" value="Other">
+                                            <label for="reason6">
+                                                <span class="radio-icon"></span>
+                                                Other
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="reason-form-group">
+                                    <label>
+                                        Additional comments <span class="optional">(optional)</span>
+                                    </label>
+                                    <textarea name="reason_details" class="custom-reason-textarea"
+                                              placeholder="Tell us more about why you're cancelling (helps us improve)..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            <button type="submit" class="btn-confirm-cancel" id="confirmBtn">
+                                <i class="fas fa-times-circle"></i> Confirm Cancellation
+                            </button>
+                            <a href="{% url 'store:order_detail' order.id %}" class="btn-keep-order">
+                                <i class="fas fa-arrow-left"></i> Keep My Order
+                            </a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        {% else %}
+            <!-- ===== CAN'T CANCEL STATE ===== -->
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <div class="cancel-card">
+                        <div class="card-body">
+                            <div class="cant-cancel-box">
+                                <div class="icon">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                <h4>Cannot Cancel This Order</h4>
+                                <p>
+                                    {% if order.order_status == 'SHP' %}
+                                        Your order has already been shipped and cannot be cancelled. You can return it after delivery.
+                                    {% elif order.order_status == 'DEL' %}
+                                        This order has been delivered. You can request a return within 7 days of delivery.
+                                    {% elif order.order_status == 'CAN' %}
+                                        This order has already been cancelled.
+                                    {% else %}
+                                        This order cannot be cancelled at its current status ({{ order.get_order_status_display }}).
+                                    {% endif %}
+                                </p>
+                                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                                    <a href="{% url 'store:order_detail' order.id %}" class="btn btn-primary rounded-pill px-4">
+                                        <i class="fas fa-eye"></i> View Order
+                                    </a>
+                                    <a href="{% url 'store:my_orders' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                                        <i class="fas fa-arrow-left"></i> Back to Orders
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('cancelOrderForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Validate reason is selected
+                const reasonSelected = form.querySelector('input[name="reason"]:checked');
+                if (!reasonSelected) {
+                    e.preventDefault();
+                    alert('Please select a reason for cancellation.');
+                    return false;
+                }
+
+                // Final confirmation
+                if (!confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // Disable button and show loading
+                const btn = document.getElementById('confirmBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+            });
+        }
+    });
+</script>
+{% endblock %}

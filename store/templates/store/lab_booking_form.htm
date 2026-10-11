@@ -1,0 +1,132 @@
+{% extends 'store/header.html' %}
+
+{% block title %}Book {{ test_name }} | MediStore{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'store:home' %}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'store:lab_tests' %}">Lab Tests</a></li>
+                    <li class="breadcrumb-item active">Book Test</li>
+                </ol>
+            </nav>
+
+            <!-- Progress Steps -->
+            <div class="checkout-steps mb-4">
+                <div class="checkout-step active">
+                    <div class="step-number">1</div>
+                    <span class="step-label">Patient Details</span>
+                </div>
+                <div class="step-connector"></div>
+                <div class="checkout-step">
+                    <div class="step-number">2</div>
+                    <span class="step-label">Payment</span>
+                </div>
+                <div class="step-connector"></div>
+                <div class="checkout-step">
+                    <div class="step-number">3</div>
+                    <span class="step-label">Confirmation</span>
+                </div>
+            </div>
+
+            <!-- Selected Test Summary -->
+            <div class="card shadow-sm border-0 rounded-4 mb-3">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted text-uppercase fw-bold">Selected {{ test_type|title }}</small>
+                            <h5 class="fw-bold mb-1 mt-1">{{ test_name }}</h5>
+                            <small class="text-muted"><i class="fas fa-home"></i> Free Home Collection</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-success" style="font-size: 1.5rem;">₹{{ price }}</div>
+                            {% if mrp %}<small class="text-muted text-decoration-line-through">₹{{ mrp }}</small>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Details Form -->
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-4 rounded-bottom-0">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Patient Details</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" action="{% url 'store:book_lab_test' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="test_id" value="{{ test_id }}">
+                        <input type="hidden" name="test_name" value="{{ test_name }}">
+                        <input type="hidden" name="test_type" value="{{ test_type }}">
+                        <input type="hidden" name="price" value="{{ price }}">
+                        <input type="hidden" name="mrp" value="{{ mrp }}">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Patient Name *</label>
+                                <input type="text" name="patient_name" class="form-control" required
+                                       value="{{ user.get_full_name|default:user.username }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Age *</label>
+                                <input type="number" name="patient_age" class="form-control" min="1" max="120" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Gender *</label>
+                                <select name="patient_gender" class="form-select" required>
+                                    <option value="">Select</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Phone *</label>
+                                <input type="tel" name="patient_phone" class="form-control" required
+                                       placeholder="10-digit mobile" pattern="[0-9]{10}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Preferred Collection Date *</label>
+                                <input type="date" name="collection_date" class="form-control" required
+                                       min="{% now 'Y-m-d' %}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Preferred Time Slot *</label>
+                                <select name="collection_time" class="form-select" required>
+                                    <option value="">Select Time</option>
+                                    <option value="06:00 AM - 08:00 AM">06:00 AM - 08:00 AM</option>
+                                    <option value="08:00 AM - 10:00 AM">08:00 AM - 10:00 AM</option>
+                                    <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
+                                    <option value="12:00 PM - 02:00 PM">12:00 PM - 02:00 PM</option>
+                                    <option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM</option>
+                                    <option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Fasting Required?</label>
+                                <div class="form-control bg-light" style="pointer-events: none;">
+                                    <i class="fas fa-info-circle text-primary"></i>
+                                    <small>8-12 hours fasting recommended</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 py-3 fw-bold">
+                                <i class="fas fa-arrow-right"></i> Continue to Payment
+                            </button>
+                            <a href="{% url 'store:lab_tests' %}" class="btn btn-outline-secondary rounded-pill px-4 py-3">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -565,59 +565,241 @@ def order_detail(request, order_id):
         'items': items,
     }
     return render(request, 'Store/order_detail.html', context)
-
 @login_required
 def cancel_order(request, order_id):
     """Cancel an order"""
-    order = get_object_or_404(CustomerOrder, pk=order_id, user=request.user)
-    
+    order = get_object_or_404(CustomerOrder, id=order_id, user=request.user)
+
+    # Check if order can be cancelled
     if order.order_status not in ['PEN', 'PRO']:
         messages.error(request, 'This order cannot be cancelled.')
-        return redirect('order_detail', order_id=order.id)
-    
+        return redirect('store:order_detail', order_id=order.id)
+
     if request.method == 'POST':
+        reason = request.POST.get('reason', 'No reason provided')
+        reason_details = request.POST.get('reason_details', '')
+
+        # Update order status
         order.order_status = 'CAN'
         order.cancelled_date = timezone.now()
+        order.cancellation_reason = reason + (f" - {reason_details}" if reason_details else "")
         order.save()
-        
+
         # Restore stock
         for item in order.items.all():
-            medicine = item.medicine
-            medicine.quantity += item.quantity
-            medicine.save()
-        
+            item.medicine.quantity += item.quantity
+            item.medicine.save()
+
         # Create status history
         OrderStatusHistory.objects.create(
             order=order,
             status='CAN',
-            note=f"Order cancelled by customer: {request.POST.get('reason', 'No reason provided')}",
+            note=f'Order cancelled by customer. Reason: {reason}' + (f' ({reason_details})' if reason_details else ''),
             changed_by=request.user
         )
-        
-        messages.success(request, f'Order #{order.order_number} cancelled successfully.')
-        return redirect('store:my_orders')
-    
-    context = {
-        'order': order,
-    }
-    return render(request, 'Store/cancel_order.html', context)
 
+        messages.success(request, f'Order #{order.order_number} has been cancelled successfully.')
+        return redirect('store:my_orders')
+
+    return render(request, 'store/cancel_order.html', {'order': order})
 
 def lab_tests(request):
-    """Lab tests page"""
+    """Lab tests page with address passing"""
+    default_packages = [
+        {
+            'id': 1,
+            'name': 'Full Body Checkup',
+            'description': 'Complete health assessment',
+            'icon': 'fas fa-heartbeat',
+            'tests_count': 65,
+            'tests': ['Complete Blood Count', 'Lipid Profile', 'Liver Function', 'Kidney Function', 'Thyroid Profile'],
+            'price': 999,
+            'mrp': 2499,
+            'badge': 'Best Value',
+            'category': 'popular full-body',
+        },
+        {
+            'id': 2,
+            'name': 'Diabetes Care',
+            'description': 'Complete diabetes monitoring',
+            'icon': 'fas fa-tint',
+            'tests_count': 12,
+            'tests': ['HbA1c Test', 'Fasting Blood Sugar', 'Post Meal Sugar', 'Kidney Function'],
+            'price': 599,
+            'mrp': 1299,
+            'badge': 'Popular',
+            'category': 'popular diabetes',
+        },
+        {
+            'id': 3,
+            'name': 'Heart Health',
+            'description': 'Cardiac risk assessment',
+            'icon': 'fas fa-heart',
+            'tests_count': 8,
+            'tests': ['Lipid Profile', 'ECG', 'Homocysteine', 'CRP Test'],
+            'price': 899,
+            'mrp': 1799,
+            'badge': None,
+            'category': 'cardiac',
+        },
+        {
+            'id': 4,
+            'name': "Women's Wellness",
+            'description': 'Essential tests for women',
+            'icon': 'fas fa-female',
+            'tests_count': 45,
+            'tests': ['Complete Blood Count', 'Thyroid Profile', 'Vitamin D & B12', 'Iron Studies'],
+            'price': 1199,
+            'mrp': 2499,
+            'badge': None,
+            'category': 'popular',
+        },
+    ]
+
+    default_tests = [
+        {'id': 101, 'name': 'Complete Blood Count (CBC)', 'description': '30 parameters • 6 hours report', 'icon': 'fas fa-tint', 'price': 299, 'mrp': 599, 'category': 'popular'},
+        {'id': 102, 'name': 'HbA1c Test', 'description': '3-month sugar average', 'icon': 'fas fa-tint', 'price': 349, 'mrp': 699, 'category': 'diabetes'},
+        {'id': 103, 'name': 'Fasting Blood Sugar', 'description': 'Diabetes screening', 'icon': 'fas fa-cube', 'price': 149, 'mrp': 299, 'category': 'diabetes'},
+        {'id': 104, 'name': 'Lipid Profile', 'description': '8 parameters', 'icon': 'fas fa-heart', 'price': 449, 'mrp': 899, 'category': 'cardiac full-body'},
+        {'id': 105, 'name': 'Thyroid Profile', 'description': 'T3, T4, TSH', 'icon': 'fas fa-bolt', 'price': 549, 'mrp': 1099, 'category': 'popular full-body'},
+        {'id': 106, 'name': 'Vitamin D Test', 'description': 'Bone health', 'icon': 'fas fa-sun', 'price': 799, 'mrp': 1499, 'category': 'popular'},
+    ]
+
+    # Addresses for the modal
+    addresses = []
+    if request.user.is_authenticated:
+        addresses = UserAddress.objects.filter(user=request.user, is_active=True)
+
     context = {
-        'tests': [
-            {'name': 'Complete Blood Count', 'price': 499, 'description': '30 tests included'},
-            {'name': 'HbA1c Test', 'price': 399, 'description': '3 tests included'},
-            {'name': 'Fasting Blood Sugar', 'price': 199, 'description': '1 test included'},
-            {'name': 'Lipid Profile', 'price': 599, 'description': '8 tests included'},
-            {'name': 'Liver Function Test', 'price': 799, 'description': '12 tests included'},
-            {'name': 'Kidney Function Test', 'price': 699, 'description': '10 tests included'},
-            {'name': 'Thyroid Profile', 'price': 899, 'description': '5 tests included'},
-            {'name': 'Vitamin D Test', 'price': 999, 'description': '1 test included'},
-        ]
+        'packages': default_packages,
+        'tests': default_tests,
+        'addresses': addresses,
     }
-    return render(request, 'lab_tests.html', context)
+    return render(request, 'store/lab_tests.html', context)
+
+
+@login_required
+def book_lab_test(request):
+    """Book a lab test - redirects to payment"""
+    if request.method == 'POST':
+        # Store booking in session
+        booking = {
+            'test_id': request.POST.get('test_id'),
+            'test_name': request.POST.get('test_name'),
+            'test_type': request.POST.get('test_type', 'test'),  # test or package
+            'price': request.POST.get('price'),
+            'mrp': request.POST.get('mrp', ''),
+            'patient_name': request.POST.get('patient_name', request.user.get_full_name() or request.user.username),
+            'patient_age': request.POST.get('patient_age', ''),
+            'patient_gender': request.POST.get('patient_gender', ''),
+            'patient_phone': request.POST.get('patient_phone', ''),
+            'collection_date': request.POST.get('collection_date', ''),
+            'collection_time': request.POST.get('collection_time', ''),
+            'collection_address': request.POST.get('collection_address', ''),
+        }
+        request.session['lab_booking'] = booking
+        return redirect('store:lab_payment')
+
+    return redirect('store:lab_tests')
+
+
+@login_required
+def lab_booking_form(request):
+    """Show lab test booking form with patient details"""
+    test_id = request.GET.get('test_id')
+    test_name = request.GET.get('test_name')
+    test_type = request.GET.get('type', 'test')
+    price = request.GET.get('price')
+    mrp = request.GET.get('mrp', '')
+
+    if not test_name or not price:
+        messages.error(request, 'Invalid test selection.')
+        return redirect('store:lab_tests')
+
+    context = {
+        'test_id': test_id,
+        'test_name': test_name,
+        'test_type': test_type,
+        'price': price,
+        'mrp': mrp,
+    }
+    return render(request, 'store/lab_booking_form.html', context)
+
+
+@login_required
+def lab_payment(request):
+    """Show payment options for lab test"""
+    booking = request.session.get('lab_booking')
+    if not booking:
+        messages.error(request, 'No booking found. Please select a test first.')
+        return redirect('store:lab_tests')
+
+    # Get addresses for home collection
+    addresses = UserAddress.objects.filter(user=request.user, is_active=True)
+
+    context = {
+        'booking': booking,
+        'addresses': addresses,
+    }
+    return render(request, 'store/lab_payment.html', context)
+
+@login_required
+def lab_payment_process(request):
+    """Process lab test payment - handles both session and direct POST"""
+    if request.method != 'POST':
+        return redirect('store:lab_tests')
+
+    # Read from POST directly (for modal flow)
+    test_name = request.POST.get('test_name')
+    price = request.POST.get('price')
+
+    if not test_name or not price:
+        messages.error(request, 'Invalid booking data.')
+        return redirect('store:lab_tests')
+
+    # Get address
+    address_id = request.POST.get('address_id')
+    address = UserAddress.objects.filter(id=address_id, user=request.user).first()
+
+    if not address:
+        messages.error(request, 'Please select a collection address.')
+        return redirect('store:lab_tests')
+
+    import uuid
+    booking_id = 'LAB' + uuid.uuid4().hex[:10].upper()
+
+    # Save booking to session (in production, save to a LabBooking model)
+    request.session['lab_booking_complete'] = {
+        'booking_id': booking_id,
+        'test_name': test_name,
+        'test_type': request.POST.get('test_type', 'test'),
+        'price': price,
+        'mrp': request.POST.get('mrp', ''),
+        'patient_name': request.POST.get('patient_name', ''),
+        'patient_age': request.POST.get('patient_age', ''),
+        'patient_gender': request.POST.get('patient_gender', ''),
+        'patient_phone': request.POST.get('patient_phone', ''),
+        'collection_date': request.POST.get('collection_date', ''),
+        'collection_time': request.POST.get('collection_time', ''),
+        'address': address.get_full_address(),
+        'payment_method': request.POST.get('payment_method', 'online'),
+        'status': 'confirmed',
+    }
+
+    return redirect('store:lab_booking_success')
+
+@login_required
+def lab_booking_success(request):
+    """Show booking success page"""
+    booking = request.session.get('lab_booking_complete')
+    if not booking:
+        messages.error(request, 'No booking found.')
+        return redirect('store:lab_tests')
+
+    context = {
+        'booking': booking,
+    }
+    return render(request, 'store/lab_booking_success.html', context)
 
 
 @login_required

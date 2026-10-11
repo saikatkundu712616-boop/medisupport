@@ -34,8 +34,13 @@ urlpatterns = [
     path('order/<int:order_id>/', views.order_detail, name='order_detail'),
     path('order/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
     
-    # Lab Tests
+  # ===== LAB TESTS =====
     path('lab-tests/', views.lab_tests, name='lab_tests'),
+    path('lab-tests/book/', views.lab_booking_form, name='lab_booking_form'),
+    path('lab-tests/book/submit/', views.book_lab_test, name='book_lab_test'),
+    path('lab-tests/payment/', views.lab_payment, name='lab_payment'),
+    path('lab-tests/payment/process/', views.lab_payment_process, name='lab_payment_process'),
+    path('lab-tests/success/', views.lab_booking_success, name='lab_booking_success'),
     
     # Wishlist
     path('wishlist/', views.wishlist, name='wishlist'),

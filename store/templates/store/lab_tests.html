@@ -1,0 +1,1308 @@
+{% extends 'store/header.html' %}
+{% load static %}
+
+{% block title %}Lab Tests | MediStore{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== HERO ===== */
+    .lab-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0e7490 100%);
+        padding: 70px 0 60px;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 50px;
+        border-radius: 0 0 40px 40px;
+        color: white;
+    }
+    .lab-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(52, 152, 219, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .lab-hero::after {
+        content: '🧪';
+        position: absolute;
+        right: 8%;
+        bottom: 8%;
+        font-size: 140px;
+        opacity: 0.06;
+        animation: floatIcon 6s ease-in-out infinite;
+    }
+    @keyframes floatIcon {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-25px) rotate(8deg); }
+    }
+    .lab-hero-content {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(52,152,219,0.4);
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #3498db;
+        backdrop-filter: blur(12px);
+        margin-bottom: 20px;
+    }
+    .lab-hero-content h1 {
+        font-size: 3rem;
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 15px;
+    }
+    .lab-hero-content h1 .highlight {
+        background: linear-gradient(135deg, #3498db, #2ecc71);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .lab-hero-content p {
+        font-size: 1.15rem;
+        opacity: 0.85;
+        max-width: 600px;
+        margin: 0 auto 30px;
+    }
+    .hero-features {
+        display: flex;
+        justify-content: center;
+        gap: 25px;
+        flex-wrap: wrap;
+        margin-top: 30px;
+    }
+    .hero-features .feature-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.08);
+        padding: 8px 18px;
+        border-radius: 50px;
+        font-size: 13px;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    .hero-features .feature-chip i { color: #2ecc71; }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 35px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        border: 1px solid #e5e7eb;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .filter-bar .search-box { flex: 1; min-width: 250px; position: relative; }
+    .filter-bar .search-box i {
+        position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+        color: #94a3b8;
+    }
+    .filter-bar .search-box input {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.3s;
+    }
+    .filter-bar .search-box input:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 4px rgba(52,152,219,0.08);
+    }
+    .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-tabs .tab-btn {
+        padding: 10px 20px;
+        border: 1px solid #e5e7eb;
+        border-radius: 50px;
+        background: white;
+        color: #475569;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .filter-tabs .tab-btn:hover { border-color: #3498db; color: #3498db; }
+    .filter-tabs .tab-btn.active {
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        border-color: transparent;
+        color: white;
+        box-shadow: 0 4px 15px rgba(52,152,219,0.3);
+    }
+
+    /* ===== SECTION HEADERS ===== */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 25px;
+    }
+    .section-header h3 {
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 1.6rem;
+        margin: 0;
+        position: relative;
+    }
+    .section-header h3::after {
+        content: '';
+        position: absolute;
+        bottom: -8px; left: 0;
+        width: 50px; height: 4px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        border-radius: 10px;
+    }
+    .section-header p { color: #64748b; margin: 12px 0 0; font-size: 14px; }
+
+    /* ===== PACKAGES ===== */
+    .packages-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 50px;
+    }
+    .package-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    .package-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 50px rgba(52,152,219,0.15);
+        border-color: rgba(52,152,219,0.3);
+    }
+    .package-badge {
+        position: absolute;
+        top: 15px; right: 15px;
+        z-index: 2;
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
+        color: white;
+        padding: 4px 14px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 15px rgba(239,68,68,0.3);
+    }
+    .package-badge.best { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .package-head {
+        padding: 30px 25px 20px;
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        position: relative;
+        overflow: hidden;
+    }
+    .package-icon {
+        width: 60px; height: 60px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin-bottom: 15px;
+        box-shadow: 0 8px 20px rgba(52,152,219,0.3);
+    }
+    .package-head h5 {
+        font-weight: 800;
+        font-size: 18px;
+        color: #0f172a;
+        margin-bottom: 6px;
+    }
+    .package-head p { font-size: 13px; color: #64748b; margin: 0; }
+    .package-body {
+        padding: 20px 25px 25px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+    .tests-count {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #475569;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #e5e7eb;
+    }
+    .tests-count i { color: #3498db; font-size: 16px; }
+    .includes-list { list-style: none; padding: 0; margin: 0 0 18px; flex: 1; }
+    .includes-list li {
+        font-size: 13px;
+        color: #475569;
+        padding: 4px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .includes-list li i { color: #22c55e; font-size: 12px; flex-shrink: 0; }
+    .package-price {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #f1f5f9;
+    }
+    .price-wrapper .current-price {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #16a34a;
+        line-height: 1;
+    }
+    .price-wrapper .mrp {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        text-decoration: line-through;
+        margin-left: 8px;
+    }
+    .price-wrapper .save-badge {
+        display: inline-block;
+        background: #dcfce7;
+        color: #16a34a;
+        padding: 2px 10px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 6px;
+    }
+    .btn-book {
+        width: 100%;
+        padding: 12px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+        border: none;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+    .btn-book:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 25px rgba(52,152,219,0.35);
+    }
+
+    /* ===== INDIVIDUAL TESTS ===== */
+    .tests-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 50px;
+    }
+    .test-card {
+        background: white;
+        border-radius: 16px;
+        padding: 22px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .test-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 4px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        transform: scaleY(0);
+        transition: transform 0.3s;
+    }
+    .test-card:hover::before { transform: scaleY(1); }
+    .test-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 10px 30px rgba(52,152,219,0.1);
+        border-color: rgba(52,152,219,0.2);
+    }
+    .test-icon {
+        width: 55px; height: 55px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        color: #3498db;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+        transition: all 0.3s;
+    }
+    .test-card:hover .test-icon {
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+    }
+    .test-info { flex: 1; }
+    .test-info h6 {
+        font-weight: 700;
+        font-size: 15px;
+        color: #0f172a;
+        margin-bottom: 4px;
+    }
+    .test-info p { font-size: 12px; color: #64748b; margin: 0 0 6px; }
+    .test-info .test-price {
+        font-weight: 800;
+        color: #16a34a;
+        font-size: 16px;
+    }
+    .test-info .test-mrp {
+        font-size: 12px;
+        color: #94a3b8;
+        text-decoration: line-through;
+        margin-left: 6px;
+    }
+
+    /* ===== WHY ===== */
+    .why-section {
+        background: linear-gradient(135deg, #f8fafc, #eef2ff);
+        border-radius: 24px;
+        padding: 50px 30px;
+        margin-bottom: 50px;
+    }
+    .why-section h3 {
+        text-align: center;
+        font-weight: 900;
+        color: #0f172a;
+        font-size: 1.8rem;
+        margin-bottom: 12px;
+    }
+    .why-section > p {
+        text-align: center;
+        color: #64748b;
+        margin-bottom: 40px;
+    }
+    .why-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+    }
+    .why-card {
+        background: white;
+        border-radius: 18px;
+        padding: 28px 22px;
+        text-align: center;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s;
+    }
+    .why-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(52,152,219,0.1);
+        border-color: rgba(52,152,219,0.2);
+    }
+    .why-icon {
+        width: 65px; height: 65px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        margin: 0 auto 16px;
+        box-shadow: 0 8px 20px rgba(52,152,219,0.25);
+    }
+    .why-card h5 {
+        font-weight: 800;
+        font-size: 16px;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+    .why-card p { font-size: 13px; color: #64748b; margin: 0; line-height: 1.6; }
+
+    /* ===== HOW IT WORKS ===== */
+    .how-section { margin-bottom: 60px; }
+    .how-section h3 {
+        text-align: center;
+        font-weight: 900;
+        color: #0f172a;
+        font-size: 1.8rem;
+        margin-bottom: 40px;
+    }
+    .how-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+    }
+    .how-step {
+        text-align: center;
+        padding: 20px 15px;
+    }
+    .step-number {
+        width: 60px; height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 900;
+        margin: 0 auto 18px;
+        box-shadow: 0 10px 25px rgba(52,152,219,0.3);
+    }
+    .step-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .how-step h5 {
+        font-weight: 800;
+        font-size: 16px;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+    .how-step p { font-size: 13px; color: #64748b; margin: 0; }
+
+    /* ===== CTA ===== */
+    .lab-cta {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        border-radius: 24px;
+        padding: 50px 40px;
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 40px;
+    }
+    .lab-cta h3 {
+        font-weight: 900;
+        font-size: 1.8rem;
+        margin-bottom: 12px;
+    }
+    .lab-cta p {
+        color: rgba(255,255,255,0.8);
+        max-width: 500px;
+        margin: 0 auto 25px;
+    }
+    .cta-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .btn-cta-primary {
+        padding: 14px 32px;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #3498db, #2563eb);
+        color: white;
+        border: none;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-cta-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(52,152,219,0.4);
+        color: white;
+    }
+    .btn-cta-outline {
+        padding: 14px 32px;
+        border-radius: 50px;
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255,255,255,0.3);
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-cta-outline:hover {
+        background: white;
+        color: #0f172a;
+        transform: translateY(-3px);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 992px) {
+        .lab-hero-content h1 { font-size: 2.2rem; }
+        .packages-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    }
+    @media (max-width: 768px) {
+        .lab-hero { padding: 45px 0 40px; }
+        .lab-hero-content h1 { font-size: 1.8rem; }
+        .lab-hero-content p { font-size: 1rem; }
+        .filter-bar { padding: 15px; }
+        .filter-tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 5px; }
+        .filter-tabs .tab-btn { white-space: nowrap; }
+        .section-header h3 { font-size: 1.3rem; }
+        .packages-grid, .tests-grid { grid-template-columns: 1fr; gap: 15px; }
+        .why-section { padding: 35px 20px; }
+        .lab-cta { padding: 35px 20px; }
+        .lab-cta h3 { font-size: 1.4rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== HERO ===== -->
+<section class="lab-hero">
+    <div class="container">
+        <div class="lab-hero-content">
+            <span class="hero-badge">
+                <i class="fas fa-flask"></i> NABL Certified Lab Tests
+            </span>
+            <h1>Book <span class="highlight">Lab Tests</span> at Home</h1>
+            <p>Get accurate diagnostic reports without leaving your home. Free sample collection, expert technicians, and quick results.</p>
+
+            <div class="hero-features">
+                <div class="feature-chip"><i class="fas fa-check-circle"></i> Home Sample Collection</div>
+                <div class="feature-chip"><i class="fas fa-clock"></i> Reports in 24 Hours</div>
+                <div class="feature-chip"><i class="fas fa-user-md"></i> Certified Labs</div>
+                <div class="feature-chip"><i class="fas fa-tag"></i> Up to 60% Off</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+
+    <!-- ===== FILTER BAR ===== -->
+    <div class="filter-bar">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="labSearch" placeholder="Search for lab tests, packages...">
+        </div>
+        <div class="filter-tabs">
+            <button class="tab-btn active" onclick="filterTests(this, 'all')">
+                <i class="fas fa-th"></i> All
+            </button>
+            <button class="tab-btn" onclick="filterTests(this, 'popular')">
+                <i class="fas fa-fire"></i> Popular
+            </button>
+            <button class="tab-btn" onclick="filterTests(this, 'full-body')">
+                <i class="fas fa-heartbeat"></i> Full Body
+            </button>
+            <button class="tab-btn" onclick="filterTests(this, 'diabetes')">
+                <i class="fas fa-tint"></i> Diabetes
+            </button>
+            <button class="tab-btn" onclick="filterTests(this, 'cardiac')">
+                <i class="fas fa-heart"></i> Heart
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== POPULAR PACKAGES ===== -->
+    <div class="section-header">
+        <div>
+            <h3>Popular Health Packages</h3>
+            <p>Comprehensive test packages at the best prices</p>
+        </div>
+        <a href="#" style="color: #3498db; font-weight: 600; text-decoration: none; font-size: 14px;">
+            View All <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <div class="packages-grid" id="packagesGrid">
+        {% for package in packages %}
+            <div class="package-card" data-category="{{ package.category }}">
+                {% if package.badge %}
+                    <span class="package-badge {% if package.badge == 'Best Value' %}best{% endif %}">
+                        {{ package.badge }}
+                    </span>
+                {% endif %}
+
+                <div class="package-head">
+                    <div class="package-icon">
+                        <i class="{{ package.icon }}"></i>
+                    </div>
+                    <h5>{{ package.name }}</h5>
+                    <p>{{ package.description }}</p>
+                </div>
+
+                <div class="package-body">
+                    <div class="tests-count">
+                        <i class="fas fa-vial"></i>
+                        {{ package.tests_count }} Tests Included
+                    </div>
+
+                    <ul class="includes-list">
+                        {% for test in package.tests %}
+                            <li><i class="fas fa-check-circle"></i> {{ test }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="package-price">
+                        <div class="price-wrapper">
+                            <span class="current-price">₹{{ package.price }}</span>
+                            <span class="mrp">₹{{ package.mrp }}</span>
+                            <div class="save-badge">Save ₹{{ package.mrp|add:"-"|add:package.price }}</div>
+                        </div>
+                    </div>
+
+                    <button class="btn-book"
+                            onclick="startBooking('{{ package.name|escapejs }}', {{ package.price }}, {{ package.mrp }}, 'package')">
+                        <i class="fas fa-calendar-check"></i> Book Now
+                    </button>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-5" style="grid-column: 1/-1;">
+                <i class="fas fa-flask" style="font-size: 3rem; color: #cbd5e1;"></i>
+                <p class="text-muted mt-3">No packages available right now.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- ===== INDIVIDUAL TESTS ===== -->
+    <div class="section-header">
+        <div>
+            <h3>Individual Tests</h3>
+            <p>Book specific tests as per your need</p>
+        </div>
+    </div>
+
+    <div class="tests-grid" id="testsGrid">
+        {% for test in tests %}
+            <div class="test-card"
+                 data-category="{{ test.category|default:'all' }}"
+                 onclick="startBooking('{{ test.name|escapejs }}', {{ test.price }}, {{ test.mrp|default:0 }}, 'test')">
+                <div class="test-icon">
+                    <i class="{{ test.icon }}"></i>
+                </div>
+                <div class="test-info">
+                    <h6>{{ test.name }}</h6>
+                    <p>{{ test.description }}</p>
+                    <div>
+                        <span class="test-price">₹{{ test.price }}</span>
+                        {% if test.mrp %}
+                            <span class="test-mrp">₹{{ test.mrp }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-5" style="grid-column: 1/-1;">
+                <i class="fas fa-vial" style="font-size: 3rem; color: #cbd5e1;"></i>
+                <p class="text-muted mt-3">No tests available right now.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- ===== WHY ===== -->
+    <div class="why-section">
+        <h3>Why Choose MediStore Labs?</h3>
+        <p>Trusted by 50,000+ customers across India</p>
+
+        <div class="why-grid">
+            <div class="why-card">
+                <div class="why-icon"><i class="fas fa-home"></i></div>
+                <h5>Free Home Collection</h5>
+                <p>Certified phlebotomists visit your home at your convenience</p>
+            </div>
+            <div class="why-card">
+                <div class="why-icon"><i class="fas fa-certificate"></i></div>
+                <h5>NABL Certified Labs</h5>
+                <p>All tests processed at NABL-accredited diagnostic labs</p>
+            </div>
+            <div class="why-card">
+                <div class="why-icon"><i class="fas fa-clock"></i></div>
+                <h5>Fast Reports</h5>
+                <p>Get accurate reports within 24 hours on your email/WhatsApp</p>
+            </div>
+            <div class="why-card">
+                <div class="why-icon"><i class="fas fa-rupee-sign"></i></div>
+                <h5>Best Prices</h5>
+                <p>Up to 60% off on all tests with no hidden charges</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== HOW IT WORKS ===== -->
+    <div class="how-section">
+        <h3>How It Works</h3>
+        <div class="how-steps">
+            <div class="how-step">
+                <div class="step-number">1</div>
+                <div class="step-icon">🔍</div>
+                <h5>Book Test</h5>
+                <p>Select your test or package and book a slot</p>
+            </div>
+            <div class="how-step">
+                <div class="step-number">2</div>
+                <div class="step-icon">🏠</div>
+                <h5>Home Collection</h5>
+                <p>Our technician visits your home for sample collection</p>
+            </div>
+            <div class="how-step">
+                <div class="step-number">3</div>
+                <div class="step-icon">🔬</div>
+                <h5>Lab Processing</h5>
+                <p>Samples are processed at our NABL-certified labs</p>
+            </div>
+            <div class="how-step">
+                <div class="step-number">4</div>
+                <div class="step-icon">📱</div>
+                <h5>Get Reports</h5>
+                <p>Receive digital reports within 24 hours</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CTA ===== -->
+    <div class="lab-cta">
+        <h3>Not Sure Which Test to Book?</h3>
+        <p>Consult our AI Doctor for personalized test recommendations or chat with our health experts.</p>
+        <div class="cta-buttons">
+            <a href="#" class="btn-cta-primary">
+                <i class="fas fa-robot"></i> Ask AI Doctor
+            </a>
+            <a href="tel:+919876543210" class="btn-cta-outline">
+                <i class="fas fa-phone"></i> Call Us
+            </a>
+        </div>
+    </div>
+
+    <div style="height: 40px;"></div>
+</div>
+
+<!-- ===== BOOKING MODAL ===== -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border: none; border-radius: 24px; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #3498db, #2563eb); color: white; border: none; padding: 22px 28px;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1" id="modalTestName">Book Lab Test</h5>
+                    <small style="opacity: 0.9;">Fill in the details to proceed</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Progress Bar -->
+                <div class="d-flex justify-content-between mb-4" id="modalProgress">
+                    <div class="text-center flex-fill active" data-step="1" style="color: #3498db;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: #3498db; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700;">1</div>
+                        <small class="fw-bold">Details</small>
+                    </div>
+                    <div class="text-center flex-fill" data-step="2" style="color: #94a3b8;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: #e5e7eb; color: #64748b; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700;">2</div>
+                        <small class="fw-bold">Payment</small>
+                    </div>
+                    <div class="text-center flex-fill" data-step="3" style="color: #94a3b8;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: #e5e7eb; color: #64748b; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-weight: 700;">3</div>
+                        <small class="fw-bold">Confirm</small>
+                    </div>
+                </div>
+
+                <!-- Step 1: Patient Details -->
+                <div id="step1" class="modal-step">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Patient Name *</label>
+                            <input type="text" id="patientName" class="form-control" required
+                                   value="{{ user.get_full_name|default:user.username }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Age *</label>
+                            <input type="number" id="patientAge" class="form-control" min="1" max="120" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Gender *</label>
+                            <select id="patientGender" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone *</label>
+                            <input type="tel" id="patientPhone" class="form-control" pattern="[0-9]{10}" required
+                                   placeholder="10-digit mobile number">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Collection Date *</label>
+                            <input type="date" id="collectionDate" class="form-control" required
+                                   min="{% now 'Y-m-d' %}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Time Slot *</label>
+                            <select id="collectionTime" class="form-select" required>
+                                <option value="">Select Time</option>
+                                <option value="06:00 AM - 08:00 AM">06:00 AM - 08:00 AM</option>
+                                <option value="08:00 AM - 10:00 AM">08:00 AM - 10:00 AM</option>
+                                <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
+                                <option value="12:00 PM - 02:00 PM">12:00 PM - 02:00 PM</option>
+                                <option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM</option>
+                                <option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fasting Required</label>
+                            <input type="text" class="form-control" value="8-12 hours recommended" readonly style="background: #f8fafc;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Payment -->
+                <div id="step2" class="modal-step" style="display: none;">
+                    <!-- Address -->
+                    <label class="form-label fw-semibold mb-2">Collection Address *</label>
+                    {% if addresses %}
+                        {% for address in addresses %}
+                            <div class="address-option-modal {% if address.is_default %}selected{% endif %}"
+                                 data-id="{{ address.id }}"
+                                 onclick="selectModalAddress(this, {{ address.id }})">
+                                <div class="d-flex align-items-start gap-2">
+                                    <span class="radio-dot" style="width: 18px; height: 18px; border: 2px solid {% if address.is_default %}#3498db{% else %}#cbd5e1{% endif %}; border-radius: 50%; flex-shrink: 0; margin-top: 3px; background: {% if address.is_default %}#3498db{% else %}transparent{% endif %};"></span>
+                                    <div style="flex: 1;">
+                                        <strong style="font-size: 14px;">{{ address.name }}</strong>
+                                        {% if address.is_default %}<span class="badge bg-success" style="font-size: 9px;">Default</span>{% endif %}
+                                        <div class="text-muted" style="font-size: 12px;">{{ address.phone }}</div>
+                                        <div style="font-size: 12px;">{{ address.get_full_address }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <input type="hidden" id="modalAddressId" value="{% for a in addresses %}{% if a.is_default %}{{ a.id }}{% endif %}{% endfor %}">
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            No address found.
+                            <a href="{% url 'store:address_create' %}?next=lab_tests" class="alert-link">Add one now</a>
+                        </div>
+                    {% endif %}
+
+                    <!-- Payment Method -->
+                    <label class="form-label fw-semibold mt-3 mb-2">Payment Method *</label>
+
+                    <label class="payment-option-modal selected" data-value="online">
+                        <input type="radio" name="modalPayment" value="online" checked>
+                        <div class="payment-icon-modal" style="background: linear-gradient(135deg, #3498db, #2563eb);">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 14px;">Pay Online</div>
+                            <small class="text-muted">UPI, Card, Net Banking</small>
+                        </div>
+                        <span class="badge bg-success ms-auto">Recommended</span>
+                    </label>
+
+                    <label class="payment-option-modal" data-value="cash">
+                        <input type="radio" name="modalPayment" value="cash">
+                        <div class="payment-icon-modal" style="background: #f1f5f9; color: #64748b;">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 14px;">Cash on Collection</div>
+                            <small class="text-muted">Pay to phlebotomist</small>
+                        </div>
+                    </label>
+
+                    <label class="payment-option-modal" data-value="lab">
+                        <input type="radio" name="modalPayment" value="lab">
+                        <div class="payment-icon-modal" style="background: #f1f5f9; color: #64748b;">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold" style="font-size: 14px;">Pay at Lab Center</div>
+                            <small class="text-muted">Visit lab and pay</small>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Step 3: Confirmation -->
+                <div id="step3" class="modal-step" style="display: none;">
+                    <div class="text-center py-3">
+                        <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #22c55e, #16a34a); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; color: white; font-size: 2rem;">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <h4 class="fw-bold">Ready to Confirm?</h4>
+                        <p class="text-muted">Please review your booking details below</p>
+                    </div>
+
+                    <div class="bg-light p-3 rounded-3 mt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Test</span>
+                            <strong id="summaryTest">-</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Patient</span>
+                            <strong id="summaryPatient">-</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Date & Time</span>
+                            <strong id="summaryDateTime">-</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Payment</span>
+                            <strong id="summaryPayment">-</strong>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold fs-5">Total</span>
+                            <span class="fw-bold fs-4 text-success" id="summaryTotal">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 18px 28px;">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" id="modalBackBtn" style="display: none;" onclick="prevStep()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="modalNextBtn" onclick="nextStep()">
+                    Continue <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .address-option-modal {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .address-option-modal:hover { border-color: #3498db; }
+    .address-option-modal.selected {
+        border-color: #3498db;
+        background: #f0f9ff;
+    }
+    .payment-option-modal {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .payment-option-modal:hover { border-color: #3498db; }
+    .payment-option-modal.selected {
+        border-color: #3498db;
+        background: #f0f9ff;
+    }
+    .payment-option-modal input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .payment-icon-modal {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+    }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ===== STATE =====
+    let bookingState = {
+        step: 1,
+        test_name: '',
+        price: 0,
+        mrp: 0,
+        test_type: 'test',
+    };
+
+    // ===== SEARCH =====
+    document.getElementById('labSearch').addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        document.querySelectorAll('.package-card, .test-card').forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+
+    // ===== FILTER =====
+    function filterTests(btn, category) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.package-card').forEach(card => {
+            if (category === 'all') {
+                card.style.display = '';
+            } else {
+                const cat = card.getAttribute('data-category') || '';
+                card.style.display = cat.includes(category) ? '' : 'none';
+            }
+        });
+    }
+
+    // ===== START BOOKING =====
+    function startBooking(name, price, mrp, type) {
+        bookingState = {
+            step: 1,
+            test_name: name,
+            price: price,
+            mrp: mrp || 0,
+            test_type: type,
+        };
+
+        document.getElementById('modalTestName').textContent = name;
+        document.getElementById('patientName').value = '{{ user.get_full_name|default:user.username }}';
+        document.getElementById('patientAge').value = '';
+        document.getElementById('patientGender').value = '';
+        document.getElementById('patientPhone').value = '';
+        document.getElementById('collectionDate').value = '';
+        document.getElementById('collectionTime').value = '';
+
+        gotoStep(1);
+
+        const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+        modal.show();
+    }
+
+    // ===== MODAL STEP NAVIGATION =====
+    function gotoStep(step) {
+        bookingState.step = step;
+
+        // Show/hide steps
+        document.querySelectorAll('.modal-step').forEach((el, i) => {
+            el.style.display = (i + 1) === step ? 'block' : 'none';
+        });
+
+        // Update progress
+        document.querySelectorAll('#modalProgress > div').forEach((el, i) => {
+            const s = i + 1;
+            const circle = el.querySelector('div');
+            const small = el.querySelector('small');
+            if (s < step) {
+                el.style.color = '#22c55e';
+                circle.style.background = '#22c55e';
+                circle.style.color = 'white';
+                circle.innerHTML = '<i class="fas fa-check"></i>';
+            } else if (s === step) {
+                el.style.color = '#3498db';
+                circle.style.background = '#3498db';
+                circle.style.color = 'white';
+                circle.textContent = s;
+            } else {
+                el.style.color = '#94a3b8';
+                circle.style.background = '#e5e7eb';
+                circle.style.color = '#64748b';
+                circle.textContent = s;
+            }
+        });
+
+        // Buttons
+        const backBtn = document.getElementById('modalBackBtn');
+        const nextBtn = document.getElementById('modalNextBtn');
+
+        backBtn.style.display = step > 1 ? 'inline-flex' : 'none';
+
+        if (step === 3) {
+            nextBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Booking';
+            nextBtn.classList.remove('btn-primary');
+            nextBtn.classList.add('btn-success');
+        } else {
+            nextBtn.innerHTML = 'Continue <i class="fas fa-arrow-right"></i>';
+            nextBtn.classList.remove('btn-success');
+            nextBtn.classList.add('btn-primary');
+        }
+    }
+
+    // ===== NEXT / PREV =====
+    function nextStep() {
+        if (bookingState.step === 1) {
+            // Validate step 1
+            const name = document.getElementById('patientName').value.trim();
+            const age = document.getElementById('patientAge').value.trim();
+            const gender = document.getElementById('patientGender').value;
+            const phone = document.getElementById('patientPhone').value.trim();
+            const date = document.getElementById('collectionDate').value;
+            const time = document.getElementById('collectionTime').value;
+
+            if (!name || !age || !gender || !phone || !date || !time) {
+                showToast('⚠️ Please fill all required fields');
+                return;
+            }
+
+            if (!/^[0-9]{10}$/.test(phone)) {
+                showToast('⚠️ Enter a valid 10-digit phone number');
+                return;
+            }
+
+            gotoStep(2);
+        } else if (bookingState.step === 2) {
+            // Validate step 2
+            const addressId = document.getElementById('modalAddressId').value;
+            if (!addressId) {
+                showToast('⚠️ Please select a collection address');
+                return;
+            }
+
+            // Build summary
+            const name = document.getElementById('patientName').value;
+            const date = document.getElementById('collectionDate').value;
+            const time = document.getElementById('collectionTime').value;
+            const payment = document.querySelector('input[name="modalPayment"]:checked').value;
+
+            const paymentLabels = {online: 'Pay Online', cash: 'Cash on Collection', lab: 'Pay at Lab'};
+
+            document.getElementById('summaryTest').textContent = bookingState.test_name;
+            document.getElementById('summaryPatient').textContent = name;
+            document.getElementById('summaryDateTime').textContent = date + ' • ' + time;
+            document.getElementById('summaryPayment').textContent = paymentLabels[payment];
+            document.getElementById('summaryTotal').textContent = '₹' + bookingState.price;
+
+            gotoStep(3);
+        } else if (bookingState.step === 3) {
+            submitBooking();
+        }
+    }
+
+    function prevStep() {
+        if (bookingState.step > 1) {
+            gotoStep(bookingState.step - 1);
+        }
+    }
+
+    // ===== SELECT ADDRESS IN MODAL =====
+    function selectModalAddress(el, id) {
+        document.querySelectorAll('.address-option-modal').forEach(a => {
+            a.classList.remove('selected');
+            const dot = a.querySelector('.radio-dot');
+            dot.style.background = 'transparent';
+            dot.style.borderColor = '#cbd5e1';
+        });
+        el.classList.add('selected');
+        const dot = el.querySelector('.radio-dot');
+        dot.style.background = '#3498db';
+        dot.style.borderColor = '#3498db';
+        document.getElementById('modalAddressId').value = id;
+    }
+
+    // ===== PAYMENT OPTION IN MODAL =====
+    document.querySelectorAll('.payment-option-modal').forEach(opt => {
+        opt.addEventListener('click', function() {
+            document.querySelectorAll('.payment-option-modal').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+            this.querySelector('input[type="radio"]').checked = true;
+        });
+    });
+
+    // ===== SUBMIT BOOKING =====
+    function submitBooking() {
+        const btn = document.getElementById('modalNextBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Booking...';
+
+        // Build payload
+        const payload = new URLSearchParams();
+        payload.append('test_name', bookingState.test_name);
+        payload.append('test_type', bookingState.test_type);
+        payload.append('price', bookingState.price);
+        payload.append('mrp', bookingState.mrp);
+        payload.append('patient_name', document.getElementById('patientName').value);
+        payload.append('patient_age', document.getElementById('patientAge').value);
+        payload.append('patient_gender', document.getElementById('patientGender').value);
+        payload.append('patient_phone', document.getElementById('patientPhone').value);
+        payload.append('collection_date', document.getElementById('collectionDate').value);
+        payload.append('collection_time', document.getElementById('collectionTime').value);
+        payload.append('address_id', document.getElementById('modalAddressId').value);
+        payload.append('payment_method', document.querySelector('input[name="modalPayment"]:checked').value);
+
+        // CSRF
+        const csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+
+        // POST to server
+        fetch("{% url 'store:lab_payment_process' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrf,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: payload.toString()
+        })
+        .then(res => {
+            if (res.redirected) {
+                window.location.href = res.url;
+            } else {
+                return res.text().then(t => {
+                    // Fallback: navigate to success page directly
+                    window.location.href = "{% url 'store:lab_booking_success' %}";
+                });
+            }
+        })
+        .catch(() => {
+            // Fallback - redirect anyway
+            window.location.href = "{% url 'store:lab_booking_success' %}";
+        });
+    }
+
+    // ===== HELPERS =====
+    function getCookie(name) {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? match[2] : '';
+    }
+
+    function showToast(msg) {
+        let toast = document.getElementById('labToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'labToast';
+            toast.style.cssText = `
+                position: fixed; bottom: 30px; right: 30px;
+                background: #0f172a; color: white; padding: 14px 22px;
+                border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+                font-weight: 600; z-index: 10000; font-size: 14px;
+                transform: translateY(100px); opacity: 0;
+                transition: all 0.35s ease;
+            `;
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        toast.style.transform = 'translateY(0)';
+        toast.style.opacity = '1';
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => {
+            toast.style.transform = 'translateY(100px)';
+            toast.style.opacity = '0';
+        }, 3000);
+    }
+</script>
+{% endblock %}

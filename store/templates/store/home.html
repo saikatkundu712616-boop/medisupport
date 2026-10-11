@@ -110,46 +110,6 @@
     </div>
 </section>
 
-<!-- ===== CATEGORIES ===== -->
-<div class="container">
-    <div class="section-header">
-        <h2>Browse Categories</h2>
-        <a href="{% url 'store:category_list' %}">View All →</a>
-    </div>
-    
-    <div class="category-grid">
-        <a href="{% url 'store:category_count' 'antibiotics' %}" class="category-card">
-            <div class="icon">💊</div>
-            <h6>Antibiotics</h6>
-            <small>120+ Products</small>
-        </a>
-        <a href="{% url 'store:category_count' 'pain-relief' %}" class="category-card">
-            <div class="icon">💪</div>
-            <h6>Pain Relief</h6>
-            <small>85+ Products</small>
-        </a>
-        <a href="{% url 'store:category_count' 'vitamins' %}" class="category-card">
-            <div class="icon">🧬</div>
-            <h6>Vitamins</h6>
-            <small>65+ Products</small>
-        </a>
-        <a href="{% url 'store:category_count' 'diabetes' %}" class="category-card">
-            <div class="icon">🩸</div>
-            <h6>Diabetes Care</h6>
-            <small>45+ Products</small>
-        </a>
-        <a href="{% url 'store:category_count' 'cardiac' %}" class="category-card">
-            <div class="icon">❤️</div>
-            <h6>Cardiac Care</h6>
-            <small>38+ Products</small>
-        </a>
-        <a href="{% url 'store:category_count' 'cold-flu' %}" class="category-card">
-            <div class="icon">🤧</div>
-            <h6>Cold & Flu</h6>
-            <small>52+ Products</small>
-        </a>
-    </div>
-</div>
 
 <!-- ===== FEATURED MEDICINES ===== -->
 <div class="container">
@@ -214,7 +174,46 @@
         {% endfor %}
     </div>
 </div>
-
+<!-- ===== CATEGORIES ===== -->
+<div class="container">
+    <div class="section-header">
+        <h2>Browse Categories</h2>
+        <a href="{% url 'store:category_list' %}">View All →</a>
+    </div>
+    
+    <div class="category-grid">
+        <a href="{% url 'store:category_count' 'antibiotics' %}" class="category-card">
+            <div class="icon">💊</div>
+            <h6>Antibiotics</h6>
+            <small>120+ Products</small>
+        </a>
+        <a href="{% url 'store:category_count' 'pain-relief' %}" class="category-card">
+            <div class="icon">💪</div>
+            <h6>Pain Relief</h6>
+            <small>85+ Products</small>
+        </a>
+        <a href="{% url 'store:category_count' 'vitamins' %}" class="category-card">
+            <div class="icon">🧬</div>
+            <h6>Vitamins</h6>
+            <small>65+ Products</small>
+        </a>
+        <a href="{% url 'store:category_count' 'diabetes' %}" class="category-card">
+            <div class="icon">🩸</div>
+            <h6>Diabetes Care</h6>
+            <small>45+ Products</small>
+        </a>
+        <a href="{% url 'store:category_count' 'cardiac' %}" class="category-card">
+            <div class="icon">❤️</div>
+            <h6>Cardiac Care</h6>
+            <small>38+ Products</small>
+        </a>
+        <a href="{% url 'store:category_count' 'cold-flu' %}" class="category-card">
+            <div class="icon">🤧</div>
+            <h6>Cold & Flu</h6>
+            <small>52+ Products</small>
+        </a>
+    </div>
+</div>
 <!-- ===== LAB TESTS BANNER ===== -->
 <div class="container mt-5">
     <div class="row g-0 bg-white rounded-4 overflow-hidden shadow-sm" style="border: 1px solid #e5e7eb;">
